@@ -12,11 +12,14 @@ import Firebase
 struct MemoriesApp: App {
     
     @StateObject private var loginViewModel = LoginViewModel()
+    @StateObject private var viewModel = ViewModel()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(loginViewModel)
+                .environmentObject(viewModel)
+                .environment(\.colorScheme, .dark)
         }
     }
     

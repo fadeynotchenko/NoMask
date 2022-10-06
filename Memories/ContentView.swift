@@ -8,19 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    @AppStorage("isLoggin") private var isLoggin = false
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+        if isLoggin {
+            MemoryListView()
+        } else {
+            LoginView()
         }
-        .padding()
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
