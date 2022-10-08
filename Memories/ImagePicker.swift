@@ -10,7 +10,7 @@ import PhotosUI
 import FYVideoCompressor
 
 struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var images: [UIImage]
+    @Binding var images: [UIImage?]
     @Binding var videos: [URL]
     @Binding var picker: Bool
     
@@ -60,19 +60,6 @@ struct ImagePicker: UIViewControllerRepresentable {
                     manager.requestImage(for: obj, targetSize: size, contentMode: .aspectFit, options: option) { image, _ in
                         if let image = image {
                             self.parent.images.append(image)
-                        }
-                    }
-                } else if obj.mediaType == .video {
-                    manager.requestAVAsset(forVideo: obj, options: nil) { video, _, _ in
-                        if let video = video as? AVURLAsset {
-                            FYVideoCompressor().compressVideo(video.url, quality: .custom(scale: CGSize(width: 720, height: 1280))) { result in
-                                switch result {
-                                case .success(let compressedVideoURL):
-                                    self.parent.videos.append(compressedVideoURL)
-                                case .failure(_):
-                                    self.parent.videos.append(video.url)
-                                }
-                            }
                         }
                     }
                 }

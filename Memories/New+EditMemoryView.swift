@@ -20,7 +20,7 @@ struct NewMemoryView: View {
     @State private var name = ""
     @State private var text = ""
     @State private var date = Date()
-    @State private var images = [UIImage]()
+    @State private var images = [UIImage?](repeating: nil, count: 20)
     @State private var videos = [URL]()
     
     @State private var showPickerView = false
@@ -76,13 +76,33 @@ struct NewMemoryView: View {
             .toast(isPresenting: $error) {
                 AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка!", subTitle: "Требуется доступ к галерее")
             }
+            .onAppear {
+                if let memory = viewModel.detailMemory, viewModel.showDetail {
+                    memory.images.enumerated().forEach { i, url in
+                        if let url = url {
+                            getData(from: url) { data, _, _ in
+                                if let data = data, let image = UIImage(data: data) {
+                                    images[i] = image
+                                }
+                            }
+                        }
+                    }
+                    
+                    name = memory.name
+                    date = memory.date
+                    
+                    if let text = memory.text {
+                        self.text = text
+                    }
+                }
+            }
         }
     }
     
     private var header: some View {
         VStack {
             HStack {
-                Title(text: "Новое Воспоминание")
+                Title(text: viewModel.showDetail ? "Редактировать" : "Новое Воспоминание")
                 
                 Spacer()
                 
@@ -103,6 +123,9 @@ struct NewMemoryView: View {
             
             TextField("Например: Геледжик 2010", text: $name)
                 .foregroundColor(.gray)
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(15)
         }
     }
     
@@ -112,6 +135,9 @@ struct NewMemoryView: View {
             
             TextField("(Необязательно)", text: $text)
                 .foregroundColor(.gray)
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(15)
         }
     }
     
@@ -123,7 +149,7 @@ struct NewMemoryView: View {
     }
     
     private var mediaSection: some View {
-        VStack(alignment: .leading, spacing: 15) {
+        VStack(alignment: .leading, spacing: 10) {
             Title(text: "Фото и Видео")
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -134,23 +160,15 @@ struct NewMemoryView: View {
                         openImagePicker()
                     }
                     
-                    //videos
-                    ForEach(videos, id: \.self) { url in
-                        VideoItem(url: url)
-                            .deleteButtonOverlay {
-                                videos = videos.filter {
-                                    $0 != url
+                    ForEach(images.compactMap { $0 }, id: \.self) { img in
+                        if let img = img {
+                            ImageItem(type: .image(image: img), size: 150)
+                                .deleteButtonOverlay {
+                                    images = images.filter {
+                                        $0 != img
+                                    }
                                 }
-                            }
-                    }
-                    
-                    ForEach(images, id: \.self) { img in
-                        ImageItem(type: .image(image: img), size: 150)
-                            .deleteButtonOverlay {
-                                images = images.filter {
-                                    $0 != img
-                                }
-                            }
+                        }
                     }
                 }
             }
@@ -164,10 +182,20 @@ struct NewMemoryView: View {
                 download = true
             }
             
-            Task {
-                await uploadToFirebase { ans in
+            uploadToFirebase { result in
+                if result {
+                    withAnimation {
+                        download = false
+                        
+                        dismiss = false
+                        
+                        viewModel.fetchData()
+                    }
+                } else {
+                    withAnimation {
+                        download = false
+                    }
                 }
-                
             }
         }
     }
@@ -206,60 +234,36 @@ struct NewMemoryView: View {
         }
     }
     
-    private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) async {
+    private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
         let db = Firestore.firestore().collection(id).document()
         
-        do {
-            if text.isEmpty {
-                try await db.setData(["name": name, "date": date])
-            } else {
-                try await db.setData(["name": name, "date": date, "text": text])
-            }
-        } catch {
-            completion(false)
-            
-            return
-        }
+        var imageURLs = [String](repeating: "", count: images.count)
         
-        createDynamicLink()
-        
-        //upload images
-        var count = 0
-        var videoCount = 0
-        uploadImages(images: images, userId: id) { bool, str in
-            if let url = str, bool {
-                
-                db.collection("images").document().setData(["url": url, "id": count])
-                count += 1
-                
-                if count == images.count {
-                    
-                    if videos.isEmpty {
-                        
-                        withAnimation {
-                            download.toggle()
-                            dismiss.toggle()
-                            
-                            viewModel.fetchData()
-                        }
+        var cnt = 0
+        images.enumerated().forEach { i, image in
+            if let image = image {
+                uploadImages(id, image: image) { url in
+                    if let url = url {
+                        imageURLs[i] = url
+                        cnt += 1
                     } else {
-                        uploadVideos(videos: videos, userId: id) { bool, url in
-                            if let url = url, bool {
+                        completion(false)
+                        
+                        return
+                    }
+                    
+                    if cnt == images.count {
+                        createDynamicLink { link in
+                            if let link = link {
+                                db.setData(["name": name, "date": date, "text": text, "images": imageURLs, "link": link])
                                 
-                                db.collection("videos").document().setData(["url": url, "id": videoCount])
-                                videoCount += 1
+                                completion(true)
+                            } else {
+                                completion(false)
                                 
-                                if videoCount == videos.count {
-                                    
-                                    withAnimation {
-                                        download.toggle()
-                                        dismiss.toggle()
-                                        
-                                        viewModel.fetchData()
-                                    }
-                                }
+                                return
                             }
                         }
                     }
@@ -268,73 +272,31 @@ struct NewMemoryView: View {
         }
     }
     
-    private func uploadImages(images: [UIImage], userId: String, completion: @escaping (_ status: Bool,_ response: String?) -> Void) {
-        images.enumerated().forEach { (index, image) in
-            guard let data = image.jpegData(compressionQuality: 0.5) else{
-                completion(false, nil)
-                return
-            }
-            
-            let riversRef = Storage.storage().reference().child("\(userId)/images/\(UUID().uuidString)")
-            // Upload the file to the path "images/rivers.jpg"
-            let _ = riversRef.putData(data, metadata: nil) { (metadata, error) in
-                guard let _ = metadata else {
-                    
-                    completion(false,error!.localizedDescription)
-                    return
-                }
-                
-                riversRef.downloadURL { (url, error) in
-                    guard let downloadURL = url else{
-                        completion(false,error!.localizedDescription)
-                        return
-                    }
-                    completion(true, downloadURL.absoluteString)
-                }
-            }
-        }
-    }
-    
-    private func uploadVideos(videos: [URL], userId: String, completion: @escaping (_ status: Bool, _ response: String?) -> Void) {
-        videos.enumerated().forEach { (index, url1) in
-            do {
-                let data = try Data(contentsOf: url1)
-                
-                let riversRef = Storage.storage().reference().child("\(userId)/videos/\(UUID().uuidString).mp4")
-                let imgsRef = Storage.storage().reference().child("\(userId)/images/\(UUID().uuidString)")
-                
-                let _ = riversRef.putData(data, metadata: nil) { (metadata, error) in
-                    guard let _ = metadata else {
-                        
-                        completion(false, nil)
-                        return
-                    }
-                    
-                    riversRef.downloadURL { (url, error) in
-                        if let url = url {
-                            completion(true, url.absoluteString)
-                        }
-                    }
-                }
-            } catch {
-                completion(false, nil)
-            }
-        }
-    }
-    
-    private func generateThumbnail(asset: AVAsset, completion: @escaping (UIImage?) -> Void) {
-        let imageGenerator = AVAssetImageGenerator(asset: asset)
-        imageGenerator.appliesPreferredTrackTransform = true
+    private func uploadImages(_ id: String, image: UIImage, _ comletion: @escaping (String?) -> Void) {
+        let storage = Storage.storage().reference().child(id).child("images").child(UUID().uuidString)
         
-        do {
-            let thumbnailCGImage = try imageGenerator.copyCGImage(at: CMTimeMake(value: 1, timescale: 60), actualTime: nil)
-            completion(UIImage(cgImage: thumbnailCGImage))
-        } catch {
-            completion(nil)
+        if let data = image.pngData() {
+            let _ = storage.putData(data) { _, error in
+                if error != nil {
+                    comletion(nil)
+                }
+                
+                storage.downloadURL { url, error in
+                    if error != nil {
+                        comletion(nil)
+                    }
+                    
+                    if let url = url {
+                        comletion(url.absoluteString)
+                    }
+                }
+            }
+        } else {
+            comletion(nil)
         }
     }
     
-    private func createDynamicLink() {
+    private func createDynamicLink(_ completion: @escaping (String?) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
         var components = URLComponents()
@@ -363,13 +325,15 @@ struct NewMemoryView: View {
             shareLink.socialMetaTagParameters?.descriptionText = text
         }
         
-        print(shareLink.link)
-        
-        shareLink.shorten { url, _, _ in
-            if let url = url {
-                print(url)
-            }
+        if let url = shareLink.url?.absoluteString {
+            completion(url)
+        } else {
+            completion(nil)
         }
+    }
+    
+    func getData(from url: URL, completion: @escaping (Data?, URLResponse?, Error?) -> ()) {
+        URLSession.shared.dataTask(with: url, completionHandler: completion).resume()
     }
 }
 

@@ -13,9 +13,18 @@ import AVKit
 struct MemoryListView: View {
     
     @State private var showNewMemoryView = false
+    @State private var searchText = ""
     
     @EnvironmentObject private var viewModel: ViewModel
     @Namespace private var animation
+    
+    private var memories: [Memory] {
+        if searchText.isEmpty {
+            return viewModel.memories
+        }
+        
+        return viewModel.memories.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+    }
     
     var body: some View {
         GeometryReader { reader in
@@ -24,25 +33,26 @@ struct MemoryListView: View {
             ZStack {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
-                if viewModel.showFetchLoadingView {
+                if viewModel.loadStatus == .empty {
+                    Text("Список пуст")
+                } else if viewModel.loadStatus == .start {
                     ProgressView()
-                }
-                
-                if viewModel.memoriesIsEmpty {
-                    Text("У Вас нет воспоминаний")
-                        .foregroundColor(.gray)
                 }
                 
                 ScrollView {
                     LazyVStack(spacing: 20) {
-                        ForEach(viewModel.memories.sorted { $0.date > $1.date }, id: \.id) { memory in
+                        
+                        searchView
+                            .frame(width: width - 20)
+                        
+                        ForEach(memories.sorted { $0.date > $1.date }, id: \.id) { memory in
                             Button {
-                                withAnimation(.interactiveSpring(response: 0.6, dampingFraction: 0.8, blendDuration: 0.8)) {
+                                withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
                                     viewModel.detailMemory = memory
                                     viewModel.showDetail = true
                                 }
                                 
-                                withAnimation(.interactiveSpring(response: 0.6, dampingFraction: 0.8, blendDuration: 0.8).delay(0.1)) {
+                                withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8).delay(0.1)) {
                                     viewModel.animattion = true
                                 }
                             } label: {
@@ -60,22 +70,43 @@ struct MemoryListView: View {
                     .opacity(showNewMemoryView ? 0 : 1)
             }
             .overlay {
-                if showNewMemoryView {
-                    NewMemoryView(dismiss: $showNewMemoryView)
-                }
-                
                 if let memory = viewModel.detailMemory, viewModel.showDetail {
                     MemoryDetailView(memory, width, reader)
                 }
-                
-                if let url = viewModel.video, viewModel.showVideoPlayer {
-                    VideoView(url, reader)
-                }
+            }
+            .fullScreenCover(isPresented: $showNewMemoryView) {
+                NewMemoryView(dismiss: $showNewMemoryView)
             }
             .task {
                 viewModel.fetchData()
             }
         }
+    }
+    
+    private var searchView: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            
+            TextField("Поиск по названию", text: $searchText)
+                .overlay(alignment: .trailing) {
+                    if !searchText.isEmpty {
+                        Button {
+                            withAnimation {
+                                searchText = ""
+                            }
+                        } label: {
+                            Image(systemName: "xmark")
+                                .frame(width: 20, height: 20)
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+        }
+        .padding(10)
+        .background(.ultraThickMaterial)
+        .cornerRadius(15)
+        .shadow(radius: 3)
     }
     
     private var header: some View {
@@ -117,34 +148,35 @@ struct MemoryListView: View {
     
     @ViewBuilder
     private func MemoryCardView(_ memory: Memory, _ size: CGFloat) -> some View {
-            ZStack(alignment: .bottomTrailing) {
-                TabView(selection: viewModel.detailMemory?.uuid == memory.uuid ? $viewModel.imageID : nil) {
-                    ForEach(0..<memory.images.count, id: \.self) { i in
-                        ImageItem(type: .url(url: memory.images[i]), size: size - 20)
+        TabView(selection: viewModel.detailMemory?.uuid == memory.uuid ? $viewModel.imageID : nil) {
+            ForEach(0..<memory.images.count, id: \.self) { i in
+                if let url = memory.images[i] {
+                    ZStack(alignment: .bottomTrailing) {
+                        ImageItem(type: .url(url: url), size: size - 20)
+                        
+                        VStack(alignment: .trailing) {
+                            Text(memory.name)
+                                .bold()
+                                .font(.system(size: size / 15))
+                                .foregroundColor(.white)
+                                .shadow(radius: 5)
+                            
+                            Text(memory.date, format: .dateTime.year().month().day())
+                                .bold()
+                                .font(.system(size: size / 20))
+                                .foregroundColor(.white)
+                                .shadow(radius: 5)
+                        }
+                        .padding(size / 30)
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(width: size - 20, height: size - 20)
-                .disabled(!viewModel.showDetail)
-                
-                VStack(alignment: .trailing) {
-                    Text(memory.name)
-                        .bold()
-                        .font(.system(size: size / 15))
-                        .foregroundColor(.white)
-                        .shadow(radius: 5)
-                    
-                    Text(memory.date, format: .dateTime.year().month().day())
-                        .bold()
-                        .font(.system(size: size / 20))
-                        .foregroundColor(.white)
-                        .shadow(radius: 5)
-                }
-                .padding(size / 50)
             }
-            .cornerRadius(15)
-            .matchedGeometryEffect(id: memory.uuid, in: animation)
-            .shadow(radius: 5)
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .frame(width: size, height: size)
+        .disabled(!viewModel.showDetail)
+        .matchedGeometryEffect(id: memory.uuid, in: animation)
+        .shadow(radius: 5)
     }
     
     @ViewBuilder
@@ -163,10 +195,6 @@ struct MemoryListView: View {
                 
                 VStack(spacing: 20) {
                     photoStack(memory, size)
-                    
-                    if !memory.videos.isEmpty {
-                        videoStack(memory, size)
-                    }
                     
                     if let text = memory.text {
                         descriptionView(text)
@@ -187,13 +215,13 @@ struct MemoryListView: View {
         .overlay(alignment: .topTrailing) {
             Menu {
                 Button {
-                    
+                    showNewMemoryView = true
                 } label: {
-                    Label("Изменить", systemImage: "square.and.pencil")
+                    Label("Редактировать", systemImage: "square.and.pencil")
                 }
                 
                 Button {
-//                    self.shareApp(link: memory.link)
+                    
                 } label: {
                     Label("Поделиться", systemImage: "icloud.and.arrow.up")
                 }
@@ -217,48 +245,24 @@ struct MemoryListView: View {
                             Button {
                                 withAnimation {
                                     viewModel.imageID = i
-                                    value.scrollTo(viewModel.imageID)
                                 }
                             } label: {
-                                ImageItem(type: .url(url: memory.images[i]), size: 150)
-                                    .frame(width: size / 3, height: size / 3)
-                                    .clipped()
-                                    .cornerRadius(15)
-                                    .overlay(RoundedRectangle(cornerRadius: 15).stroke(lineWidth: (viewModel.imageID == i) ? 4 : 0).foregroundColor(Color.blue))
-                                    .id(i)
+                                if let url = memory.images[i] {
+                                    ImageItem(type: .url(url: url), size: 150)
+                                        .frame(width: size / 3, height: size / 3)
+                                        .clipped()
+                                        .cornerRadius(15)
+                                        .overlay(RoundedRectangle(cornerRadius: 15).stroke(lineWidth: (viewModel.imageID == i) ? 4 : 0).foregroundColor(Color.blue))
+                                        .id(i)
+                                }
                             }
                         }
                     }
                     .padding(.leading)
-                }
-            }
-            .frame(height: 150)
-        }
-    }
-    
-    @ViewBuilder
-    private func videoStack(_ memory: Memory, _ size: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Title(text: "Видео")
-                .padding(.leading)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 15) {
-                    ForEach(memory.videos, id: \.self) { url in
-                        Button {
-                            withAnimation {
-                                viewModel.showVideoPlayer = true
-                                viewModel.video = url
-                            }
-                        } label: {
-                            VideoItem(url: url)
-                                .frame(width: size / 3, height: size / 3)
-                                .clipped()
-                                .cornerRadius(15)
-                        }
+                    .onChange(of: viewModel.imageID) { _ in
+                        value.scrollTo(viewModel.imageID)
                     }
                 }
-                .padding(.leading)
             }
             .frame(height: 150)
         }
@@ -275,23 +279,6 @@ struct MemoryListView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading)
-    }
-    
-    @ViewBuilder
-    private func VideoView(_ url: URL, _ reader: GeometryProxy) -> some View {
-        GeometryReader { proxy in
-            VStack{
-                VideoPlayer(player: AVPlayer(url: url))
-                    .onChange(of: scale(reader.frame(in: .global).minY, proxy.frame(in: .global).minY)) { scale in
-                        if scale <= 0.30 {
-                            withAnimation {
-                                viewModel.showVideoPlayer = false
-                                viewModel.video = nil
-                            }
-                        }
-                    }
-            }
-        }
     }
 }
 

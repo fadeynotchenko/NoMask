@@ -20,6 +20,7 @@ struct MemoriesApp: App {
                 .environmentObject(loginViewModel)
                 .environmentObject(viewModel)
                 .environment(\.colorScheme, .dark)
+                .preferredColorScheme(.dark)
         }
     }
     
@@ -27,3 +28,5 @@ struct MemoriesApp: App {
         FirebaseApp.configure()
     }
 }
+
+
