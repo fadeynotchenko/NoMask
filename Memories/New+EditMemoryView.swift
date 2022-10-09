@@ -82,7 +82,11 @@ struct NewMemoryView: View {
                         if let url = url {
                             getData(from: url) { data, _, _ in
                                 if let data = data, let image = UIImage(data: data) {
-                                    images[i] = image
+                                    DispatchQueue.main.async {
+                                        withAnimation {
+                                            images[i] = image
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -241,6 +245,8 @@ struct NewMemoryView: View {
         
         var imageURLs = [String](repeating: "", count: images.count)
         
+        deleteCurrentImages()
+        
         var cnt = 0
         images.enumerated().forEach { i, image in
             if let image = image {
@@ -259,6 +265,16 @@ struct NewMemoryView: View {
                             if let link = link {
                                 db.setData(["name": name, "date": date, "text": text, "images": imageURLs, "link": link])
                                 
+                                
+                                if let _ = viewModel.detailMemory {
+                                    DispatchQueue.main.async {
+                                        viewModel.detailMemory?.name = name
+                                        viewModel.detailMemory?.date = date
+                                        viewModel.detailMemory?.text = text
+                                        viewModel.detailMemory?.images = imageURLs.map { URL(string: $0) }
+                                    }
+                                }
+                                
                                 completion(true)
                             } else {
                                 completion(false)
@@ -267,6 +283,16 @@ struct NewMemoryView: View {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+    
+    private func deleteCurrentImages() {
+        if let memory = viewModel.detailMemory {
+            memory.images.forEach { url in
+                if let url = url {
+                    Storage.storage().reference(forURL: url.absoluteString).delete { _ in }
                 }
             }
         }
