@@ -20,7 +20,7 @@ struct NewMemoryView: View {
     @State private var name = ""
     @State private var text = ""
     @State private var date = Date()
-    @State private var images = [UIImage?](repeating: nil, count: 20)
+    @State private var images = [Any]()
     @State private var videos = [URL]()
     
     @State private var showPickerView = false
@@ -29,75 +29,58 @@ struct NewMemoryView: View {
     @State private var download = false
     @State private var downloadError = false
     
+    @State private var selection = 0
+    
     @EnvironmentObject private var viewModel: ViewModel
     
     var body: some View {
         GeometryReader { reader in
             let width = reader.size.width
             
-            VStack(spacing: 15) {
-                header
+            ZStack {
+                Color("Background").edgesIgnoringSafeArea(.all)
                 
-                nameSection
-                    .padding(.horizontal)
-                
-                textSection
-                    .padding(.horizontal)
-                
-                dateDection
-                    .padding(.horizontal)
-                
-                mediaSection
-                    .padding(.horizontal)
-                
-                addButtonSection(width)
-                
-                
-                Spacer()
-            }
-            .background(Color("Background").edgesIgnoringSafeArea(.all))
-            .overlay {
-                if showPickerView {
-                    ImagePicker(images: $images, videos: $videos, picker: $showPickerView)
-                        .edgesIgnoringSafeArea(.all)
+                VStack {
+                    header
+                    
+                    TabView(selection: $selection) {
+                        first(width)
+                            .tag(0)
+                        
+                        second(width)
+                            .tag(1)
+                    }
+                    .ignoresSafeArea(.keyboard)
+                    .tabViewStyle(.page(indexDisplayMode: .always))
+                }
+                .ignoresSafeArea(.keyboard)
+                .sheet(isPresented: $showPickerView) {
+                    ImagePicker(images: $images, picker: $showPickerView)
+                        .edgesIgnoringSafeArea(.bottom)
                 }
             }
             .overlay {
                 if download {
                     ProgressView()
-                        .frame(width: 70, height: 70)
-                        .background(.ultraThinMaterial)
+                        .frame(width: 50, height: 50)
+                        .background(.ultraThickMaterial)
                         .cornerRadius(15)
                 }
             }
-            .toast(isPresenting: $downloadError) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка загрузки!")
-            }
             .toast(isPresenting: $error) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка!", subTitle: "Требуется доступ к галерее")
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка", subTitle: "Требуется доступ к галерее")
+            }
+            .toast(isPresenting: $downloadError) {
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка загрузки")
             }
             .onAppear {
                 if let memory = viewModel.detailMemory, viewModel.showDetail {
-                    memory.images.enumerated().forEach { i, url in
-                        if let url = url {
-                            getData(from: url) { data, _, _ in
-                                if let data = data, let image = UIImage(data: data) {
-                                    DispatchQueue.main.async {
-                                        withAnimation {
-                                            images[i] = image
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
                     name = memory.name
                     date = memory.date
-                    
                     if let text = memory.text {
                         self.text = text
                     }
+                    images = memory.images as [Any]
                 }
             }
         }
@@ -116,92 +99,129 @@ struct NewMemoryView: View {
                     }
                 }
             }
-            .shadow(radius: 3)
         }
         .padding()
     }
     
-    private var nameSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func first(_ width: CGFloat) -> some View {
+        VStack(spacing: 15) {
             Title(text: "Название")
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            TextField("Например: Геледжик 2010", text: $name)
+            TextField("Название Вашего воспоминания", text: $name)
                 .foregroundColor(.gray)
                 .padding()
-                .background(.ultraThinMaterial)
+                .background(.ultraThickMaterial)
                 .cornerRadius(15)
-        }
-    }
-    
-    private var textSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+            
             Title(text: "Описание")
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            TextField("(Необязательно)", text: $text)
-                .foregroundColor(.gray)
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(15)
+            if #available(iOS 16, *) {
+                TextField("(Необязательно)", text: $text, axis: .vertical)
+                    .foregroundColor(.gray)
+                    .padding()
+                    .background(.ultraThickMaterial)
+                    .cornerRadius(15)
+                    .lineLimit(1...5)
+            } else {
+                TextField("(Необязательно)", text: $text)
+                    .foregroundColor(.gray)
+                    .padding()
+                    .background(.ultraThickMaterial)
+                    .cornerRadius(15)
+            }
+            
+            DatePicker(selection: $date, displayedComponents: .date) {
+                Title(text: "Дата")
+            }
+            
+            Spacer()
+            
+            TextButton(text: "Далее", size: width - 50, color: name.isEmpty ? .gray : .white) {
+                withAnimation {
+                    selection = 1
+                }
+            }
+            .padding(.bottom)
+            .disabled(name.isEmpty)
         }
+        .shadow(radius: 3)
+        .padding()
+        
     }
     
-    private var dateDection: some View {
-        DatePicker(selection: $date, displayedComponents: [.date]) {
-            Title(text: "Дата")
-        }
-        .padding(.vertical)
-    }
-    
-    private var mediaSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Title(text: "Фото и Видео")
+    private func second(_ width: CGFloat) -> some View {
+        VStack(spacing: 15) {
+            Title(text: "Фото")
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 15) {
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVGrid(columns: [GridItem(), GridItem()], spacing: 15) {
+                    AddMediaButton(width: width / 2.3) { openImagePicker() }
                     
-                    //addButton
-                    AddMediaButton {
-                        openImagePicker()
-                    }
-                    
-                    ForEach(images.compactMap { $0 }, id: \.self) { img in
-                        if let img = img {
-                            ImageItem(type: .image(image: img), size: 150)
+                    ForEach(0..<images.count, id: \.self) { i in
+                        if let image = images[i] as? UIImage {
+                            ImageItem(type: .image(image: image), size: width / 2.3)
                                 .deleteButtonOverlay {
-                                    images = images.filter {
-                                        $0 != img
+                                    withAnimation {
+                                        images = images.filter {
+                                            $0 as? UIImage != image
+                                        }
+                                    }
+                                }
+                        } else if let url = images[i] as? URL {
+                            ImageItem(type: .url(url: url), size: width / 2.3)
+                                .deleteButtonOverlay {
+                                    withAnimation {
+                                        images = images.filter {
+                                            $0 as? URL != url
+                                        }
                                     }
                                 }
                         }
                     }
                 }
             }
-            .frame(height: 150)
-        }
-    }
-    
-    private func addButtonSection(_ width: CGFloat) -> some View {
-        TextButton(text: "Добавить", size: width - 50, color: .white) {
-            withAnimation {
-                download = true
+            
+            Spacer()
+            
+            VStack(spacing: 5) {
+                Text("Вам доступно максимум 10 фото.")
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                
+                Button("Снять ограничения") {
+                    
+                }
+                .foregroundColor(.blue)
             }
             
-            uploadToFirebase { result in
-                if result {
+            TextButton(text: "Добавить", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
+                withAnimation {
+                    download = true
+                }
+                
+                uploadToFirebase { ans in
                     withAnimation {
                         download = false
+                    }
+                    
+                    if ans {
+                        viewModel.fetchData()
                         
                         dismiss = false
-                        
-                        viewModel.fetchData()
-                    }
-                } else {
-                    withAnimation {
-                        download = false
+                    } else {
+                        downloadError = true
                     }
                 }
             }
+            .disabled(name.isEmpty || images.isEmpty)
+            .padding(.bottom)
         }
+        .padding()
+        .shadow(radius: 3)
     }
     
     private func openImagePicker() {
@@ -241,16 +261,15 @@ struct NewMemoryView: View {
     private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
-        let db = Firestore.firestore().collection(id).document()
+        let db = Firestore.firestore().collection(id)
         
         var imageURLs = [String](repeating: "", count: images.count)
         
-        deleteCurrentImages()
-        
         var cnt = 0
+        
         images.enumerated().forEach { i, image in
-            if let image = image {
-                uploadImages(id, image: image) { url in
+            if let image = image as? UIImage {
+                uploadImage(id, image: image) { url in
                     if let url = url {
                         imageURLs[i] = url
                         cnt += 1
@@ -261,44 +280,31 @@ struct NewMemoryView: View {
                     }
                     
                     if cnt == images.count {
-                        createDynamicLink { link in
-                            if let link = link {
-                                db.setData(["name": name, "date": date, "text": text, "images": imageURLs, "link": link])
-                                
-                                
-                                if let _ = viewModel.detailMemory {
-                                    DispatchQueue.main.async {
-                                        viewModel.detailMemory?.name = name
-                                        viewModel.detailMemory?.date = date
-                                        viewModel.detailMemory?.text = text
-                                        viewModel.detailMemory?.images = imageURLs.map { URL(string: $0) }
-                                    }
-                                }
-                                
-                                completion(true)
-                            } else {
-                                completion(false)
-                                
-                                return
+                        if let memory = viewModel.detailMemory, viewModel.showDetail {
+                            db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
+                            
+                            DispatchQueue.main.async {
+                                viewModel.detailMemory?.name = name
+                                viewModel.detailMemory?.date = date
+                                viewModel.detailMemory?.text = text
+                                viewModel.detailMemory?.images = imageURLs.compactMap { URL(string: $0) }
                             }
+                            
+                        } else {
+                            db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
                         }
+                        
+                        completion(true)
                     }
                 }
+            } else if let url = image as? URL {
+                imageURLs[i] = url.absoluteString
+                cnt += 1
             }
         }
     }
     
-    private func deleteCurrentImages() {
-        if let memory = viewModel.detailMemory {
-            memory.images.forEach { url in
-                if let url = url {
-                    Storage.storage().reference(forURL: url.absoluteString).delete { _ in }
-                }
-            }
-        }
-    }
-    
-    private func uploadImages(_ id: String, image: UIImage, _ comletion: @escaping (String?) -> Void) {
+    private func uploadImage(_ id: String, image: UIImage, _ comletion: @escaping (String?) -> Void) {
         let storage = Storage.storage().reference().child(id).child("images").child(UUID().uuidString)
         
         if let data = image.pngData() {
@@ -356,10 +362,6 @@ struct NewMemoryView: View {
         } else {
             completion(nil)
         }
-    }
-    
-    func getData(from url: URL, completion: @escaping (Data?, URLResponse?, Error?) -> ()) {
-        URLSession.shared.dataTask(with: url, completionHandler: completion).resume()
     }
 }
 

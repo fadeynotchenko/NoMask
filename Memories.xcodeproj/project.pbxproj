@@ -89,12 +89,10 @@
 				43332E1928EB3D2B006E017B /* MemoriesApp.swift */,
 				43332E1B28EB3D2B006E017B /* ContentView.swift */,
 				43332E3A28EB4638006E017B /* LoginView.swift */,
-				43332E3D28EB4FE6006E017B /* MemoryListView.swift */,
-				43332E3F28EB5155006E017B /* New+EditMemoryView.swift */,
+				43693DBC28F4CFC8001DD10F /* Memory */,
 				43332E3228EB3F20006E017B /* SubViews.swift */,
 				439C0F0728EB7CBB004BC325 /* ImagePicker.swift */,
-				439C0F0B28EB9E46004BC325 /* ViewModel.swift */,
-				43332E3828EB422F006E017B /* LoginViewModel.swift */,
+				43693DBD28F4D249001DD10F /* View Models */,
 				4335C56B28F22CE7005BB3A3 /* GoogleService-Info.plist */,
 				43332E1D28EB3D2C006E017B /* Assets.xcassets */,
 				43332E3628EB3F76006E017B /* Localizable.strings */,
@@ -109,6 +107,24 @@
 				43332E2028EB3D2C006E017B /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		43693DBC28F4CFC8001DD10F /* Memory */ = {
+			isa = PBXGroup;
+			children = (
+				43332E3D28EB4FE6006E017B /* MemoryListView.swift */,
+				43332E3F28EB5155006E017B /* New+EditMemoryView.swift */,
+			);
+			path = Memory;
+			sourceTree = "<group>";
+		};
+		43693DBD28F4D249001DD10F /* View Models */ = {
+			isa = PBXGroup;
+			children = (
+				439C0F0B28EB9E46004BC325 /* ViewModel.swift */,
+				43332E3828EB422F006E017B /* LoginViewModel.swift */,
+			);
+			path = "View Models";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

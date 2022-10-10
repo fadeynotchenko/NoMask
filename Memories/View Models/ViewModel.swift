@@ -68,7 +68,7 @@ struct Memory: Identifiable {
     var images = [URL?]()
 }
 
-enum LoadDataStatus {
+enum LoadDataStatus: Hashable {
     case start
     case finish
     case empty

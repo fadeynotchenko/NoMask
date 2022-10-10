@@ -8,7 +8,7 @@
 import SwiftUI
 import CachedAsyncImage
 import Firebase
-import AVKit
+import FirebaseStorage
 
 struct MemoryListView: View {
     
@@ -221,9 +221,11 @@ struct MemoryListView: View {
                 }
                 
                 Button {
+                    animationDismiss()
                     
+                    delete(memory)
                 } label: {
-                    Label("Поделиться", systemImage: "icloud.and.arrow.up")
+                    Label("Удалить", systemImage: "trash")
                 }
             } label: {
                 ImageButton(systemName: "ellipsis", color: .white) { }
@@ -324,6 +326,22 @@ extension MemoryListView {
             viewModel.animattion = false
             viewModel.detailMemory = nil
             viewModel.showDetail = false
+        }
+    }
+    
+    private func delete(_ memory: Memory) {
+        guard let id = Auth.auth().currentUser?.uid else { return }
+        
+        memory.images.forEach { url in
+            if let url = url {
+                Storage.storage().reference(forURL: url.absoluteString).delete { _ in }
+            }
+        }
+        
+        Firestore.firestore().collection(id).document(memory.id).delete()
+        
+        withAnimation {
+            viewModel.fetchData()
         }
     }
 }

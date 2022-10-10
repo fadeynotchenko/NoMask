@@ -10,8 +10,7 @@ import PhotosUI
 import FYVideoCompressor
 
 struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var images: [UIImage?]
-    @Binding var videos: [URL]
+    @Binding var images: [Any]
     @Binding var picker: Bool
     
     func makeCoordinator() -> Coordinator {
@@ -22,8 +21,8 @@ struct ImagePicker: UIViewControllerRepresentable {
         let photoLibrary = PHPhotoLibrary.shared()
         var config = PHPickerConfiguration(photoLibrary: photoLibrary)
         
-        config.selectionLimit = 20 - images.count - videos.count
-        config.filter = .any(of: [.images, .videos])
+        config.selectionLimit = 10 - images.count
+        config.filter = .images
         
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
