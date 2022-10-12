@@ -7,7 +7,6 @@
 import Foundation
 import SwiftUI
 import PhotosUI
-import FYVideoCompressor
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var images: [Any]

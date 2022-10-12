@@ -22,6 +22,9 @@ struct MemoriesApp: App {
                 .environment(\.colorScheme, .dark)
                 .preferredColorScheme(.dark)
                 .onAppear(perform: UIApplication.shared.addTapGestureRecognizer)
+                .onOpenURL { url in
+                    viewModel.shareURL = url
+                }
         }
     }
     

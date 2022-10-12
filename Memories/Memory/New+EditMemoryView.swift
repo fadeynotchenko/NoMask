@@ -11,7 +11,7 @@ import FirebaseStorage
 import FirebaseFirestore
 import Firebase
 import AlertToast
-import FirebaseDynamicLinks
+import WidgetKit
 
 struct NewMemoryView: View {
     
@@ -20,8 +20,9 @@ struct NewMemoryView: View {
     @State private var name = ""
     @State private var text = ""
     @State private var date = Date()
+    
     @State private var images = [Any]()
-    @State private var videos = [URL]()
+    @State private var deletedImages = [URL]()
     
     @State private var showPickerView = false
     @State private var error = false
@@ -65,6 +66,7 @@ struct NewMemoryView: View {
                         .frame(width: 50, height: 50)
                         .background(.ultraThickMaterial)
                         .cornerRadius(15)
+                        .shadow(radius: 3)
                 }
             }
             .toast(isPresenting: $error) {
@@ -80,7 +82,8 @@ struct NewMemoryView: View {
                     if let text = memory.text {
                         self.text = text
                     }
-                    images = memory.images as [Any]
+                    
+                    images = memory.images.compactMap { $0 }
                 }
             }
         }
@@ -162,7 +165,7 @@ struct NewMemoryView: View {
                     
                     ForEach(0..<images.count, id: \.self) { i in
                         if let image = images[i] as? UIImage {
-                            ImageItem(type: .image(image: image), size: width / 2.3)
+                            ImageItem(type: .image(image: image), size: width / 2.3, inDisk: false)
                                 .deleteButtonOverlay {
                                     withAnimation {
                                         images = images.filter {
@@ -171,8 +174,10 @@ struct NewMemoryView: View {
                                     }
                                 }
                         } else if let url = images[i] as? URL {
-                            ImageItem(type: .url(url: url), size: width / 2.3)
+                            ImageItem(type: .url(url: url), size: width / 2.3, inDisk: false)
                                 .deleteButtonOverlay {
+                                    deletedImages.append(url)
+                                    
                                     withAnimation {
                                         images = images.filter {
                                             $0 as? URL != url
@@ -209,7 +214,7 @@ struct NewMemoryView: View {
                     }
                     
                     if ans {
-                        viewModel.fetchData()
+                        viewModel.fetchAllMemories()
                         
                         dismiss = false
                     } else {
@@ -267,39 +272,71 @@ struct NewMemoryView: View {
         
         var cnt = 0
         
+        print(images)
         images.enumerated().forEach { i, image in
             if let image = image as? UIImage {
                 uploadImage(id, image: image) { url in
                     if let url = url {
                         imageURLs[i] = url
                         cnt += 1
+                        
+                        if cnt == images.count {
+                            if let memory = viewModel.detailMemory, viewModel.showDetail {
+                                db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
+                                
+                                DispatchQueue.main.async {
+                                    viewModel.detailMemory?.name = name
+                                    viewModel.detailMemory?.date = date
+                                    viewModel.detailMemory?.text = text
+                                    viewModel.detailMemory?.images = imageURLs.compactMap { URL(string: $0) }
+                                }
+                                
+                            } else {
+                                db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
+                            }
+                            
+                            deletedImages.forEach { url in
+                                Storage.storage().reference(forURL: url.absoluteString).delete { _ in}
+                            }
+                            
+                            WidgetCenter.shared.reloadAllTimelines()
+                            
+                            completion(true)
+                        }
                     } else {
                         completion(false)
                         
                         return
                     }
-                    
-                    if cnt == images.count {
-                        if let memory = viewModel.detailMemory, viewModel.showDetail {
-                            db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
-                            
-                            DispatchQueue.main.async {
-                                viewModel.detailMemory?.name = name
-                                viewModel.detailMemory?.date = date
-                                viewModel.detailMemory?.text = text
-                                viewModel.detailMemory?.images = imageURLs.compactMap { URL(string: $0) }
-                            }
-                            
-                        } else {
-                            db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
+                }
+            } else {
+                let url = image as? URL
+                imageURLs[i] = url!.absoluteString
+                cnt += 1
+                
+                if cnt == images.count {
+                    if let memory = viewModel.detailMemory, viewModel.showDetail {
+                        db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
+                        
+                        DispatchQueue.main.async {
+                            viewModel.detailMemory?.name = name
+                            viewModel.detailMemory?.date = date
+                            viewModel.detailMemory?.text = text
+                            viewModel.detailMemory?.images = imageURLs.map { URL(string: $0) }
                         }
                         
-                        completion(true)
+                    } else {
+                        db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
                     }
+                    
+                    deletedImages.forEach { url in
+                        Storage.storage().reference(forURL: url.absoluteString).delete { _ in}
+                    }
+                    
+                    WidgetCenter.shared.reloadAllTimelines()
+                    
+                    completion(true)
                 }
-            } else if let url = image as? URL {
-                imageURLs[i] = url.absoluteString
-                cnt += 1
             }
         }
     }
@@ -325,42 +362,6 @@ struct NewMemoryView: View {
             }
         } else {
             comletion(nil)
-        }
-    }
-    
-    private func createDynamicLink(_ completion: @escaping (String?) -> Void) {
-        guard let id = Auth.auth().currentUser?.uid else { return }
-        
-        var components = URLComponents()
-        components.scheme = "https"
-        components.host = "mymemoriesapp.page.link"
-        components.path = "/memory"
-        
-        let query = URLQueryItem(name: "id", value: id)
-        components.queryItems = [query]
-        
-        guard let parametr = components.url else { return }
-        print("LINK \(parametr.absoluteString)")
-        
-        guard let shareLink = DynamicLinkComponents(link: parametr, domainURIPrefix: "https://mymemoriesapp.page.link") else { return }
-        
-        if let bundle = Bundle.main.bundleIdentifier {
-            shareLink.iOSParameters = DynamicLinkIOSParameters(bundleID: bundle)
-        }
-        
-        shareLink.iOSParameters?.appStoreID = "1642544455"
-        
-        shareLink.socialMetaTagParameters = DynamicLinkSocialMetaTagParameters()
-        shareLink.socialMetaTagParameters?.title = name
-        
-        if !text.isEmpty {
-            shareLink.socialMetaTagParameters?.descriptionText = text
-        }
-        
-        if let url = shareLink.url?.absoluteString {
-            completion(url)
-        } else {
-            completion(nil)
         }
     }
 }

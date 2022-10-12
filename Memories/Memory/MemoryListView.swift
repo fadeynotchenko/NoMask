@@ -15,6 +15,8 @@ struct MemoryListView: View {
     @State private var showNewMemoryView = false
     @State private var searchText = ""
     
+    @State private var deleteDialog = false
+    
     @EnvironmentObject private var viewModel: ViewModel
     @Namespace private var animation
     
@@ -35,8 +37,10 @@ struct MemoryListView: View {
                 
                 if viewModel.loadStatus == .empty {
                     Text("Список пуст")
+                        .foregroundColor(.gray)
                 } else if viewModel.loadStatus == .start {
                     ProgressView()
+                        .shadow(radius: 3)
                 }
                 
                 ScrollView {
@@ -67,18 +71,68 @@ struct MemoryListView: View {
             }
             .overlay(alignment: .top) {
                 header
-                    .opacity(showNewMemoryView ? 0 : 1)
             }
             .overlay {
                 if let memory = viewModel.detailMemory, viewModel.showDetail {
                     MemoryDetailView(memory, width, reader)
                 }
+                
+                if viewModel.loadMemoryByIDStatus == .start {
+                    ProgressView()
+                        .frame(width: 50, height: 50)
+                        .background(.ultraThickMaterial)
+                        .cornerRadius(15)
+                        .shadow(radius: 3)
+                }
             }
-            .fullScreenCover(isPresented: $showNewMemoryView) {
+            .sheet(isPresented: $showNewMemoryView) {
                 NewMemoryView(dismiss: $showNewMemoryView)
             }
+            .confirmationDialog("", isPresented: $deleteDialog) {
+                Button {
+                    if let memory = viewModel.detailMemory {
+                        delete(memory)
+                    }
+                    
+                    animationDismiss()
+                } label: {
+                    Text("Удалить")
+                        .foregroundColor(.red)
+                }
+            } message: {
+                Text("Удалить Воспоминание?")
+            }
             .task {
-                viewModel.fetchData()
+                viewModel.fetchAllMemories()
+            }
+            .onChange(of: viewModel.shareURL) { url in
+                
+                if let url = url?.absoluteString {
+                    withAnimation {
+                        viewModel.loadMemoryByIDStatus = .start
+                    }
+                    
+                    let sub1 = url.after(first: "=")
+                    let id = sub1.before(first: "/")
+                    let documentID = sub1.after(first: "=")
+                    
+                    viewModel.fetchMemoryByLink(userID: id, memoryID: documentID) { memory in
+                        if let memory = memory {
+                            viewModel.loadMemoryByIDStatus = .finish
+                            
+                            withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
+                                viewModel.detailMemory = memory
+                                viewModel.showDetail = true
+                            }
+                            
+                            withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8).delay(0.1)) {
+                                viewModel.animattion = true
+                            }
+                        } else {
+                            // error
+                        }
+                    }
+                }
             }
         }
     }
@@ -152,7 +206,7 @@ struct MemoryListView: View {
             ForEach(0..<memory.images.count, id: \.self) { i in
                 if let url = memory.images[i] {
                     ZStack(alignment: .bottomTrailing) {
-                        ImageItem(type: .url(url: url), size: size - 20)
+                        ImageItem(type: .url(url: url), size: size - 20, inDisk: viewModel.shareURL == nil)
                         
                         VStack(alignment: .trailing) {
                             Text(memory.name)
@@ -176,7 +230,7 @@ struct MemoryListView: View {
         .frame(width: size, height: size)
         .disabled(!viewModel.showDetail)
         .matchedGeometryEffect(id: memory.uuid, in: animation)
-        .shadow(radius: 5)
+        .shadow(radius: 3)
     }
     
     @ViewBuilder
@@ -196,7 +250,7 @@ struct MemoryListView: View {
                 VStack(spacing: 20) {
                     photoStack(memory, size)
                     
-                    if let text = memory.text {
+                    if let text = memory.text, !text.isEmpty {
                         descriptionView(text)
                     }
                 }
@@ -214,18 +268,32 @@ struct MemoryListView: View {
         }
         .overlay(alignment: .topTrailing) {
             Menu {
-                Button {
-                    showNewMemoryView = true
-                } label: {
-                    Label("Редактировать", systemImage: "square.and.pencil")
-                }
-                
-                Button {
-                    animationDismiss()
+                if viewModel.shareURL == nil {
+                    Button {
+                        showNewMemoryView = true
+                    } label: {
+                        Label("Редактировать", systemImage: "square.and.pencil")
+                    }
                     
-                    delete(memory)
-                } label: {
-                    Label("Удалить", systemImage: "trash")
+                    Button {
+                        guard let id = Auth.auth().currentUser?.uid else { return }
+                        
+                        shareApp(link: "https://mymemoriesapp.com/id=\(id)/memoryID=\(memory.id)")
+                    } label: {
+                        Label("Поделиться", systemImage: "icloud.and.arrow.up")
+                    }
+                    
+                    Button {
+                        deleteDialog = true
+                    } label: {
+                        Label("Удалить", systemImage: "trash")
+                    }
+                } else {
+                    Button {
+                        
+                    } label: {
+                        Label("Добавить к себе", systemImage: "plus")
+                    }
                 }
             } label: {
                 ImageButton(systemName: "ellipsis", color: .white) { }
@@ -250,7 +318,7 @@ struct MemoryListView: View {
                                 }
                             } label: {
                                 if let url = memory.images[i] {
-                                    ImageItem(type: .url(url: url), size: 150)
+                                    ImageItem(type: .url(url: url), size: 150, inDisk: viewModel.shareURL == nil)
                                         .frame(width: size / 3, height: size / 3)
                                         .clipped()
                                         .cornerRadius(15)
@@ -324,8 +392,9 @@ extension MemoryListView {
         
         withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
             viewModel.animattion = false
-            viewModel.detailMemory = nil
             viewModel.showDetail = false
+            viewModel.detailMemory = nil
+            viewModel.shareURL = nil
         }
     }
     
@@ -340,8 +409,24 @@ extension MemoryListView {
         
         Firestore.firestore().collection(id).document(memory.id).delete()
         
-        withAnimation {
-            viewModel.fetchData()
+        viewModel.fetchAllMemories()
+    }
+}
+
+extension String {
+    func before(first delimiter: Character) -> String {
+        if let index = firstIndex(of: delimiter) {
+            let before = prefix(upTo: index)
+            return String(before)
         }
+        return ""
+    }
+    
+    func after(first delimiter: Character) -> String {
+        if let index = firstIndex(of: delimiter) {
+            let after = suffix(from: index).dropFirst()
+            return String(after)
+        }
+        return ""
     }
 }
