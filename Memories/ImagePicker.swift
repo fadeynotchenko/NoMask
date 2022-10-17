@@ -7,10 +7,14 @@
 import Foundation
 import SwiftUI
 import PhotosUI
+import LightCompressor
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var images: [Any]
+    @Binding var videos: [URL]
     @Binding var picker: Bool
+    
+    @EnvironmentObject private var viewModel: ViewModel
     
     func makeCoordinator() -> Coordinator {
         ImagePicker.Coordinator(parent1: self)
@@ -58,6 +62,14 @@ struct ImagePicker: UIViewControllerRepresentable {
                     manager.requestImage(for: obj, targetSize: size, contentMode: .aspectFit, options: option) { image, _ in
                         if let image = image {
                             self.parent.images.append(image)
+                        }
+                    }
+                } else if obj.mediaType == .video {
+                    manager.requestAVAsset(forVideo: obj, options: nil) { video, _, _ in
+                        if let video = video as? AVURLAsset {
+                            self.parent.videos.append(video.url)
+                            
+                            
                         }
                     }
                 }

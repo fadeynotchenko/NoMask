@@ -22,6 +22,8 @@ struct NewMemoryView: View {
     @State private var date = Date()
     
     @State private var images = [Any]()
+    @State private var videos = [URL]()
+    
     @State private var deletedImages = [URL]()
     
     @State private var showPickerView = false
@@ -48,7 +50,7 @@ struct NewMemoryView: View {
                         first(width)
                             .tag(0)
                         
-                        second(width)
+                        MediaView(width)
                             .tag(1)
                     }
                     .ignoresSafeArea(.keyboard)
@@ -56,7 +58,7 @@ struct NewMemoryView: View {
                 }
                 .ignoresSafeArea(.keyboard)
                 .sheet(isPresented: $showPickerView) {
-                    ImagePicker(images: $images, picker: $showPickerView)
+                    ImagePicker(images: $images, videos: $videos, picker: $showPickerView)
                         .edgesIgnoringSafeArea(.bottom)
                 }
             }
@@ -154,7 +156,8 @@ struct NewMemoryView: View {
         
     }
     
-    private func second(_ width: CGFloat) -> some View {
+    @ViewBuilder
+    private func MediaView(_ width: CGFloat) -> some View {
         VStack(spacing: 15) {
             Title(text: "Фото")
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -163,9 +166,24 @@ struct NewMemoryView: View {
                 LazyVGrid(columns: [GridItem(), GridItem()], spacing: 15) {
                     AddMediaButton(width: width / 2.3) { openImagePicker() }
                     
+//                    ForEach(0..<videos.count, id: \.self) { i in
+//                        viewModel.getThumbnailImageFromVideoUrl(url: videos[i]) { image in
+//                            if let image = image {
+//                                ImageItem(type: .image(image: image), size: width / 2.3)
+//                                    .deleteButtonOverlay {
+//                                        withAnimation {
+//                                            videos = videos.filter {
+//                                                $0 != videos[i]
+//                                            }
+//                                        }
+//                                    }
+//                            }
+//                        }
+//                    }
+                    
                     ForEach(0..<images.count, id: \.self) { i in
                         if let image = images[i] as? UIImage {
-                            ImageItem(type: .image(image: image), size: width / 2.3, inDisk: false)
+                            ImageItem(type: .image(image: image), size: width / 2.3)
                                 .deleteButtonOverlay {
                                     withAnimation {
                                         images = images.filter {
@@ -174,7 +192,7 @@ struct NewMemoryView: View {
                                     }
                                 }
                         } else if let url = images[i] as? URL {
-                            ImageItem(type: .url(url: url), size: width / 2.3, inDisk: false)
+                            ImageItem(type: .url(url: url), size: width / 2.3)
                                 .deleteButtonOverlay {
                                     deletedImages.append(url)
                                     
@@ -189,13 +207,10 @@ struct NewMemoryView: View {
                 }
             }
             
-            Spacer()
-            
             VStack(spacing: 5) {
-                Text("Вам доступно максимум 10 фото.")
+                Text("Загружайте до 10 фото и видео. Максимальный доступный размер видео 720p")
                     .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                    .multilineTextAlignment(.center)                
                 
                 Button("Снять ограничения") {
                     
@@ -203,7 +218,7 @@ struct NewMemoryView: View {
                 .foregroundColor(.blue)
             }
             
-            TextButton(text: "Добавить", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
+            TextButton(text: viewModel.showDetail ? "Сохранить" : "Добавить", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
                 withAnimation {
                     download = true
                 }
@@ -217,6 +232,8 @@ struct NewMemoryView: View {
                         viewModel.fetchAllMemories()
                         
                         dismiss = false
+                        
+                        WidgetCenter.shared.reloadAllTimelines()
                     } else {
                         downloadError = true
                     }
@@ -295,12 +312,6 @@ struct NewMemoryView: View {
                                 db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
                             }
                             
-                            deletedImages.forEach { url in
-                                Storage.storage().reference(forURL: url.absoluteString).delete { _ in}
-                            }
-                            
-                            WidgetCenter.shared.reloadAllTimelines()
-                            
                             completion(true)
                         }
                     } else {
@@ -329,12 +340,6 @@ struct NewMemoryView: View {
                         db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
                     }
                     
-                    deletedImages.forEach { url in
-                        Storage.storage().reference(forURL: url.absoluteString).delete { _ in}
-                    }
-                    
-                    WidgetCenter.shared.reloadAllTimelines()
-                    
                     completion(true)
                 }
             }
@@ -342,7 +347,7 @@ struct NewMemoryView: View {
     }
     
     private func uploadImage(_ id: String, image: UIImage, _ comletion: @escaping (String?) -> Void) {
-        let storage = Storage.storage().reference().child(id).child("images").child(UUID().uuidString)
+        let storage = Storage.storage().reference().child(id).child("images").child("\(UUID().uuidString).jpg")
         
         if let data = image.pngData() {
             let _ = storage.putData(data) { _, error in

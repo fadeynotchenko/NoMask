@@ -9,15 +9,18 @@ import SwiftUI
 import CachedAsyncImage
 import Firebase
 import FirebaseStorage
+import AlertToast
 
 struct MemoryListView: View {
     
-    @State private var showNewMemoryView = false
     @State private var searchText = ""
     
     @State private var deleteDialog = false
+    @State private var memoryIsDownloaded = false
+    @State private var linkMemoryError = false
     
     @EnvironmentObject private var viewModel: ViewModel
+    
     @Namespace private var animation
     
     private var memories: [Memory] {
@@ -85,8 +88,8 @@ struct MemoryListView: View {
                         .shadow(radius: 3)
                 }
             }
-            .sheet(isPresented: $showNewMemoryView) {
-                NewMemoryView(dismiss: $showNewMemoryView)
+            .fullScreenCover(isPresented: $viewModel.showNewMemoryView) {
+                NewMemoryView(dismiss: $viewModel.showNewMemoryView)
             }
             .confirmationDialog("", isPresented: $deleteDialog) {
                 Button {
@@ -104,6 +107,9 @@ struct MemoryListView: View {
             }
             .task {
                 viewModel.fetchAllMemories()
+            }
+            .toast(isPresenting: $linkMemoryError) {
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка загрузки")
             }
             .onChange(of: viewModel.shareURL) { url in
                 
@@ -129,7 +135,11 @@ struct MemoryListView: View {
                                 viewModel.animattion = true
                             }
                         } else {
-                            // error
+                            withAnimation {
+                                viewModel.loadMemoryByIDStatus = .finish
+                                
+                                linkMemoryError = true
+                            }
                         }
                     }
                 }
@@ -172,11 +182,15 @@ struct MemoryListView: View {
                 
                 Menu {
                     Button {
-                        withAnimation {
-                            showNewMemoryView = true
-                        }
+                        viewModel.showNewMemoryView = true
                     } label: {
                         Label("Новое воспоминание", systemImage: "plus")
+                    }
+                    
+                    Button {
+                        viewModel.showProVersionView = true
+                    } label: {
+                        Label("Memory Pro", systemImage: "star")
                     }
                     
                     Button {
@@ -206,7 +220,7 @@ struct MemoryListView: View {
             ForEach(0..<memory.images.count, id: \.self) { i in
                 if let url = memory.images[i] {
                     ZStack(alignment: .bottomTrailing) {
-                        ImageItem(type: .url(url: url), size: size - 20, inDisk: viewModel.shareURL == nil)
+                        ImageItem(type: .url(url: url), size: size - 20)
                         
                         VStack(alignment: .trailing) {
                             Text(memory.name)
@@ -270,7 +284,7 @@ struct MemoryListView: View {
             Menu {
                 if viewModel.shareURL == nil {
                     Button {
-                        showNewMemoryView = true
+                        viewModel.showNewMemoryView = true
                     } label: {
                         Label("Редактировать", systemImage: "square.and.pencil")
                     }
@@ -290,7 +304,13 @@ struct MemoryListView: View {
                     }
                 } else {
                     Button {
-                        
+                        if let id = Auth.auth().currentUser?.uid {
+                            Firestore.firestore().collection(id).document().setData(["name": memory.name, "date": memory.date, "text": memory.text ?? "", "images": memory.images.map { $0?.absoluteString }])
+                            
+                            viewModel.fetchAllMemories()
+                            
+                            memoryIsDownloaded = true
+                        }
                     } label: {
                         Label("Добавить к себе", systemImage: "plus")
                     }
@@ -301,6 +321,9 @@ struct MemoryListView: View {
             }
         }
         .transition(.identity)
+        .toast(isPresenting: $memoryIsDownloaded) {
+            AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: "Воспоминание добавлено!")
+        }
     }
     
     private func photoStack(_ memory: Memory, _ size: CGFloat) -> some View {
@@ -318,7 +341,7 @@ struct MemoryListView: View {
                                 }
                             } label: {
                                 if let url = memory.images[i] {
-                                    ImageItem(type: .url(url: url), size: 150, inDisk: viewModel.shareURL == nil)
+                                    ImageItem(type: .url(url: url), size: 150)
                                         .frame(width: size / 3, height: size / 3)
                                         .clipped()
                                         .cornerRadius(15)
@@ -409,7 +432,9 @@ extension MemoryListView {
         
         Firestore.firestore().collection(id).document(memory.id).delete()
         
-        viewModel.fetchAllMemories()
+        withAnimation {
+            viewModel.fetchAllMemories()
+        }
     }
 }
 

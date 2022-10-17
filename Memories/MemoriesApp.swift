@@ -13,23 +13,40 @@ struct MemoriesApp: App {
     
     @StateObject private var loginViewModel = LoginViewModel()
     @StateObject private var viewModel = ViewModel()
+    @StateObject private var store = Store()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(loginViewModel)
                 .environmentObject(viewModel)
+                .environmentObject(store)
                 .environment(\.colorScheme, .dark)
                 .preferredColorScheme(.dark)
                 .onAppear(perform: UIApplication.shared.addTapGestureRecognizer)
                 .onOpenURL { url in
-                    viewModel.shareURL = url
+                    if let _ = url.baseURL {
+                        withAnimation {
+                            viewModel.showNewMemoryView = false
+                            
+                            viewModel.shareURL = url
+                        }
+                    }
+                }
+                .task {
+                    await store.fetchProducts()
                 }
         }
     }
     
     init() {
         FirebaseApp.configure()
+        
+        do {
+            try Auth.auth().useUserAccessGroup("CQ3SGH4DSY.FN.Memories")
+        } catch {
+            print(error.localizedDescription)
+        }
     }
 }
 

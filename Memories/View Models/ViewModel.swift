@@ -9,6 +9,7 @@ import SwiftUI
 import Firebase
 import FirebaseFirestore
 import FirebaseStorage
+import AVKit
 
 class ViewModel: ObservableObject {
     
@@ -23,6 +24,9 @@ class ViewModel: ObservableObject {
     @Published var animattion = false
     
     @Published var shareURL: URL?
+    
+    @Published var showNewMemoryView = false
+    @Published var showProVersionView = false
     
     func fetchAllMemories() {
         memories.removeAll()
@@ -73,6 +77,32 @@ class ViewModel: ObservableObject {
                 completion(nil)
             }
         }
+    }
+    
+    //unused
+    func getThumbnailImageFromVideoUrl(url: URL, completion: @escaping (UIImage?) -> Void) {
+        DispatchQueue.global().async { //1
+            let asset = AVAsset(url: url) //2
+            let avAssetImageGenerator = AVAssetImageGenerator(asset: asset) //3
+            avAssetImageGenerator.appliesPreferredTrackTransform = true //4
+            let thumnailTime = CMTimeMake(value: 2, timescale: 1) //5
+            do {
+                let cgThumbImage = try avAssetImageGenerator.copyCGImage(at: thumnailTime, actualTime: nil) //6
+                let thumbNailImage = UIImage(cgImage: cgThumbImage) //7
+                DispatchQueue.main.async { //8
+                    completion(thumbNailImage) //9
+                }
+            } catch {
+                print(error.localizedDescription) //10
+                DispatchQueue.main.async {
+                    completion(nil) //11
+                }
+            }
+        }
+    }
+    
+    private func getData(from url: URL, completion: @escaping (Data?, URLResponse?, Error?) -> ()) {
+        URLSession.shared.dataTask(with: url, completionHandler: completion).resume()
     }
 }
 
