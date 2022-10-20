@@ -12,6 +12,7 @@ import FirebaseFirestore
 import Firebase
 import AlertToast
 import WidgetKit
+import BSImagePicker
 
 struct NewMemoryView: View {
     
@@ -34,7 +35,8 @@ struct NewMemoryView: View {
     
     @State private var selection = 0
     
-    @EnvironmentObject private var viewModel: ViewModel
+    @EnvironmentObject private var viewModel: MemoryViewModel
+    @EnvironmentObject private var store: Store
     
     var body: some View {
         GeometryReader { reader in
@@ -47,7 +49,7 @@ struct NewMemoryView: View {
                     header
                     
                     TabView(selection: $selection) {
-                        first(width)
+                        InformationView(width)
                             .tag(0)
                         
                         MediaView(width)
@@ -57,10 +59,13 @@ struct NewMemoryView: View {
                     .tabViewStyle(.page(indexDisplayMode: .always))
                 }
                 .ignoresSafeArea(.keyboard)
-                .sheet(isPresented: $showPickerView) {
-                    ImagePicker(images: $images, videos: $videos, picker: $showPickerView)
-                        .edgesIgnoringSafeArea(.bottom)
-                }
+            }
+            .sheet(isPresented: $showPickerView) {
+                ImagePicker(images: $images, videos: $videos, picker: $showPickerView)
+                    .edgesIgnoringSafeArea(.bottom)
+            }
+            .sheet(isPresented: $viewModel.showProVersionView) {
+                ProVersionView(dismiss: $viewModel.showProVersionView)
             }
             .overlay {
                 if download {
@@ -72,10 +77,10 @@ struct NewMemoryView: View {
                 }
             }
             .toast(isPresenting: $error) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка", subTitle: "Требуется доступ к галерее")
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: viewModel.language == "ru" ? "Ошибка" : "Error", subTitle: viewModel.language == "ru" ? "Требуется доступ к галерее" : "Gallery access required")
             }
             .toast(isPresenting: $downloadError) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка загрузки")
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: viewModel.language == "ru" ? "Ошибка загрузки" : "Loading error")
             }
             .onAppear {
                 if let memory = viewModel.detailMemory, viewModel.showDetail {
@@ -94,7 +99,7 @@ struct NewMemoryView: View {
     private var header: some View {
         VStack {
             HStack {
-                Title(text: viewModel.showDetail ? "Редактировать" : "Новое Воспоминание")
+                Title(text: viewModel.showDetail ? "edit" : "new")
                 
                 Spacer()
                 
@@ -108,29 +113,30 @@ struct NewMemoryView: View {
         .padding()
     }
     
-    private func first(_ width: CGFloat) -> some View {
+    
+    private func InformationView(_ width: CGFloat) -> some View {
         VStack(spacing: 15) {
-            Title(text: "Название")
+            Title(text: "name")
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            TextField("Название Вашего воспоминания", text: $name)
+            TextField("name2", text: $name)
                 .foregroundColor(.gray)
                 .padding()
                 .background(.ultraThickMaterial)
                 .cornerRadius(15)
             
-            Title(text: "Описание")
+            Title(text: "desc")
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             if #available(iOS 16, *) {
-                TextField("(Необязательно)", text: $text, axis: .vertical)
+                TextField("optional", text: $text, axis: .vertical)
                     .foregroundColor(.gray)
                     .padding()
                     .background(.ultraThickMaterial)
                     .cornerRadius(15)
                     .lineLimit(1...5)
             } else {
-                TextField("(Необязательно)", text: $text)
+                TextField("optional", text: $text)
                     .foregroundColor(.gray)
                     .padding()
                     .background(.ultraThickMaterial)
@@ -138,17 +144,17 @@ struct NewMemoryView: View {
             }
             
             DatePicker(selection: $date, displayedComponents: .date) {
-                Title(text: "Дата")
+                Title(text: "date")
             }
             
             Spacer()
             
-            TextButton(text: "Далее", size: width - 50, color: name.isEmpty ? .gray : .white) {
+            TextButton(text: "next", size: width - 50, color: name.isEmpty ? .gray : .white) {
                 withAnimation {
                     selection = 1
                 }
             }
-            .padding(.bottom)
+            .padding(.bottom, 25)
             .disabled(name.isEmpty)
         }
         .shadow(radius: 3)
@@ -156,30 +162,17 @@ struct NewMemoryView: View {
         
     }
     
-    @ViewBuilder
     private func MediaView(_ width: CGFloat) -> some View {
         VStack(spacing: 15) {
-            Title(text: "Фото")
+            Title(text: "photo")
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVGrid(columns: [GridItem(), GridItem()], spacing: 15) {
-                    AddMediaButton(width: width / 2.3) { openImagePicker() }
-                    
-//                    ForEach(0..<videos.count, id: \.self) { i in
-//                        viewModel.getThumbnailImageFromVideoUrl(url: videos[i]) { image in
-//                            if let image = image {
-//                                ImageItem(type: .image(image: image), size: width / 2.3)
-//                                    .deleteButtonOverlay {
-//                                        withAnimation {
-//                                            videos = videos.filter {
-//                                                $0 != videos[i]
-//                                            }
-//                                        }
-//                                    }
-//                            }
-//                        }
-//                    }
+                    AddMediaButton(width: width / 2.3) {
+                        openImagePicker()
+                        
+                    }
                     
                     ForEach(0..<images.count, id: \.self) { i in
                         if let image = images[i] as? UIImage {
@@ -207,18 +200,20 @@ struct NewMemoryView: View {
                 }
             }
             
-            VStack(spacing: 5) {
-                Text("Загружайте до 10 фото и видео. Максимальный доступный размер видео 720p")
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)                
-                
-                Button("Снять ограничения") {
+            if store.purchased.isEmpty {
+                VStack(spacing: 5) {
+                    Text("limit")
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
                     
+                    Button("pro") {
+                        viewModel.showProVersionView = true
+                    }
+                    .foregroundColor(.blue)
                 }
-                .foregroundColor(.blue)
             }
             
-            TextButton(text: viewModel.showDetail ? "Сохранить" : "Добавить", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
+            TextButton(text: viewModel.showDetail ? "save" : "add", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
                 withAnimation {
                     download = true
                 }
@@ -229,8 +224,6 @@ struct NewMemoryView: View {
                     }
                     
                     if ans {
-                        viewModel.fetchAllMemories()
-                        
                         dismiss = false
                         
                         WidgetCenter.shared.reloadAllTimelines()
@@ -240,7 +233,7 @@ struct NewMemoryView: View {
                 }
             }
             .disabled(name.isEmpty || images.isEmpty)
-            .padding(.bottom)
+            .padding(.bottom, 25)
         }
         .padding()
         .shadow(radius: 3)
@@ -289,7 +282,6 @@ struct NewMemoryView: View {
         
         var cnt = 0
         
-        print(images)
         images.enumerated().forEach { i, image in
             if let image = image as? UIImage {
                 uploadImage(id, image: image) { url in
@@ -309,7 +301,7 @@ struct NewMemoryView: View {
                                 }
                                 
                             } else {
-                                db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
+                                db.document().setData(["name": name, "date": date, "text": text, "likes": 0, "liked": false, "images": imageURLs])
                             }
                             
                             completion(true)
@@ -333,7 +325,7 @@ struct NewMemoryView: View {
                             viewModel.detailMemory?.name = name
                             viewModel.detailMemory?.date = date
                             viewModel.detailMemory?.text = text
-                            viewModel.detailMemory?.images = imageURLs.map { URL(string: $0) }
+                            viewModel.detailMemory?.images = imageURLs.map { URL(string: $0)! }
                         }
                         
                     } else {
@@ -348,8 +340,16 @@ struct NewMemoryView: View {
     
     private func uploadImage(_ id: String, image: UIImage, _ comletion: @escaping (String?) -> Void) {
         let storage = Storage.storage().reference().child(id).child("images").child("\(UUID().uuidString).jpg")
+        var data: Data?
         
-        if let data = image.pngData() {
+        if store.purchased.isEmpty {
+            data = image.jpegData(compressionQuality: 0.4)
+            print("low")
+        } else {
+            data = image.pngData()
+        }
+        
+        if let data = data {
             let _ = storage.putData(data) { _, error in
                 if error != nil {
                     comletion(nil)
@@ -365,8 +365,6 @@ struct NewMemoryView: View {
                     }
                 }
             }
-        } else {
-            comletion(nil)
         }
     }
 }

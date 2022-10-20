@@ -12,7 +12,7 @@ import Firebase
 struct MemoriesApp: App {
     
     @StateObject private var loginViewModel = LoginViewModel()
-    @StateObject private var viewModel = ViewModel()
+    @StateObject private var viewModel = MemoryViewModel()
     @StateObject private var store = Store()
     
     var body: some Scene {
@@ -24,10 +24,18 @@ struct MemoriesApp: App {
                 .environment(\.colorScheme, .dark)
                 .preferredColorScheme(.dark)
                 .onAppear(perform: UIApplication.shared.addTapGestureRecognizer)
+                .onAppear {
+                    if viewModel.language == "ru" {
+                        viewModel.singleQuote = ruQuotes.randomElement()
+                    } else {
+                        viewModel.singleQuote = engQuotes.randomElement()
+                    }
+                }
                 .onOpenURL { url in
-                    if let _ = url.baseURL {
+                    if url.absoluteString.count > "https://mymemoriesapp.com/".count {
                         withAnimation {
                             viewModel.showNewMemoryView = false
+                            viewModel.showProVersionView = false
                             
                             viewModel.shareURL = url
                         }

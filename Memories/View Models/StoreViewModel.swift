@@ -23,8 +23,12 @@ class Store: ObservableObject {
     @MainActor
     func fetchProducts() async {
         do {
-            let products = try await Product.products(for: ["FN.Memories.FullVersion"])
+            let products = try await Product.products(for: ["FN.Memories.ProVersion"])
             self.products = products
+            
+            if let product = products.first {
+                await isPurchased(product)
+            }
         } catch {
             print(error)
         }
@@ -41,7 +45,7 @@ class Store: ObservableObject {
         }
     }
     
-    func restore() async -> Bool {
+    func restore(_ completion: @escaping (Bool) -> Void) async {
         try? await AppStore.sync()
                 
         for await result in Transaction.currentEntitlements {
@@ -50,11 +54,11 @@ class Store: ObservableObject {
                 
                 await transaction.finish()
                 
-                return true
+                completion(true)
             }
         }
         
-        return false
+        completion(false)
     }
     
     func listenForTransactions() -> Task<Void, Error> {

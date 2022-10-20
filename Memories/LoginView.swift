@@ -22,10 +22,10 @@ struct LoginView: View {
                 VStack(spacing: 15) {
                     Spacer()
                     
-                    Title(text: "Добро пожаловать!")
+                    Title(text: "welcome")
                         .padding()
                     
-                    Text("'Мои Воспоминания' - место, куда Вы можете сохранять свои лучшие моменты жизни")
+                    Text("welcometext")
                         .bold()
                         .multilineTextAlignment(.center)
                         .foregroundColor(.white)
@@ -37,6 +37,7 @@ struct LoginView: View {
                         loginViewModel.nonce = randomNonceString()
                         req.requestedScopes = [.fullName]
                         req.nonce = sha256(loginViewModel.nonce)
+                        
                     } onCompletion: { res in
                         switch res {
                             
@@ -52,7 +53,7 @@ struct LoginView: View {
                     .frame(width: width - 100, height: 55)
                     .cornerRadius(15)
                     
-                    Text("Для доступа в приложение требуется авторизация через Apple ID")
+                    Text("welcometext2")
                         .multilineTextAlignment(.center)
                         .foregroundColor(.gray)
                         .padding(.horizontal)

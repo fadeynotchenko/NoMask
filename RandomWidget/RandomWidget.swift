@@ -10,6 +10,7 @@ import SwiftUI
 import Firebase
 import FirebaseFirestore
 import Kingfisher
+import FirebaseAuth
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
@@ -21,7 +22,6 @@ struct Provider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
         let date = Date()
         let next = Calendar.current.date(byAdding: .hour, value: 12, to: date)!
         
@@ -58,12 +58,6 @@ struct Provider: TimelineProvider {
     
 }
 
-struct WidgetMemory {
-    var name: String
-    var date: Date
-    var image: Data
-}
-
 struct SimpleEntry: TimelineEntry {
     let date: Date
     var memory: WidgetMemory?
@@ -96,7 +90,14 @@ struct RandomWidgetEntryView : View {
                         .padding(10)
                     }
             } else {
-                Text("error")
+                ZStack {
+                    Color("Background").edgesIgnoringSafeArea(.all)
+                    
+                    VStack {
+                        Text("Загрузка...")
+                            .foregroundColor(.gray)
+                    }
+                }
             }
         }
     }

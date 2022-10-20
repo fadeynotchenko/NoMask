@@ -10,6 +10,8 @@ import CachedAsyncImage
 import Firebase
 import FirebaseStorage
 import AlertToast
+import FirebaseFirestore
+import FirebaseAuth
 
 struct MemoryListView: View {
     
@@ -19,16 +21,16 @@ struct MemoryListView: View {
     @State private var memoryIsDownloaded = false
     @State private var linkMemoryError = false
     
-    @EnvironmentObject private var viewModel: ViewModel
+    @EnvironmentObject private var memoryViewModel: MemoryViewModel
     
     @Namespace private var animation
     
     private var memories: [Memory] {
         if searchText.isEmpty {
-            return viewModel.memories
+            return memoryViewModel.memories
         }
         
-        return viewModel.memories.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+        return memoryViewModel.memories.filter { $0.name.lowercased().contains(searchText.lowercased()) }
     }
     
     var body: some View {
@@ -38,29 +40,39 @@ struct MemoryListView: View {
             ZStack {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
-                if viewModel.loadStatus == .empty {
-                    Text("Список пуст")
+                if memories.isEmpty {
+                    Text("empty")
                         .foregroundColor(.gray)
-                } else if viewModel.loadStatus == .start {
+                } else if memoryViewModel.loadStatus == .start {
                     ProgressView()
                         .shadow(radius: 3)
                 }
                 
                 ScrollView {
                     LazyVStack(spacing: 20) {
+                        quote
+                            .frame(width: width - 20)
                         
                         searchView
                             .frame(width: width - 20)
                         
+                        if memoryViewModel.loadMemoryByIDStatus == .start {
+                            ProgressView()
+                                .frame(width: 50, height: 50)
+                                .background(.ultraThickMaterial)
+                                .cornerRadius(15)
+                                .shadow(radius: 3)
+                        }
+                        
                         ForEach(memories.sorted { $0.date > $1.date }, id: \.id) { memory in
                             Button {
                                 withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
-                                    viewModel.detailMemory = memory
-                                    viewModel.showDetail = true
+                                    memoryViewModel.detailMemory = memory
+                                    memoryViewModel.showDetail = true
                                 }
                                 
                                 withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8).delay(0.1)) {
-                                    viewModel.animattion = true
+                                    memoryViewModel.animattion = true
                                 }
                             } label: {
                                 MemoryCardView(memory, width)
@@ -71,76 +83,71 @@ struct MemoryListView: View {
                     .offset(y: 70)
                     .padding(.bottom, 70)
                 }
+                .coordinateSpace(name: "scroll")
             }
             .overlay(alignment: .top) {
                 header
+//                    .opacity(scrolling ? 0 : 1)
             }
             .overlay {
-                if let memory = viewModel.detailMemory, viewModel.showDetail {
+                if let memory = memoryViewModel.detailMemory, memoryViewModel.showDetail {
                     MemoryDetailView(memory, width, reader)
                 }
-                
-                if viewModel.loadMemoryByIDStatus == .start {
-                    ProgressView()
-                        .frame(width: 50, height: 50)
-                        .background(.ultraThickMaterial)
-                        .cornerRadius(15)
-                        .shadow(radius: 3)
-                }
             }
-            .fullScreenCover(isPresented: $viewModel.showNewMemoryView) {
-                NewMemoryView(dismiss: $viewModel.showNewMemoryView)
+            .sheet(isPresented: $memoryViewModel.showNewMemoryView) {
+                NewMemoryView(dismiss: $memoryViewModel.showNewMemoryView)
+            }
+            .sheet(isPresented: $memoryViewModel.showProVersionView) {
+                ProVersionView(dismiss: $memoryViewModel.showProVersionView)
             }
             .confirmationDialog("", isPresented: $deleteDialog) {
                 Button {
-                    if let memory = viewModel.detailMemory {
+                    if let memory = memoryViewModel.detailMemory {
                         delete(memory)
                     }
                     
                     animationDismiss()
                 } label: {
-                    Text("Удалить")
+                    Text("delete")
                         .foregroundColor(.red)
                 }
             } message: {
-                Text("Удалить Воспоминание?")
+                Text("deletequestion")
             }
-            .task {
-                viewModel.fetchAllMemories()
+            .onAppear {
+                memoryViewModel.fetchAllMemories()
             }
             .toast(isPresenting: $linkMemoryError) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Ошибка загрузки")
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: memoryViewModel.language == "ru" ? "Ошибка загрузки" : "Loading error")
             }
-            .onChange(of: viewModel.shareURL) { url in
+            .onChange(of: memoryViewModel.shareURL) { url in
                 
                 if let url = url?.absoluteString {
-                    withAnimation {
-                        viewModel.loadMemoryByIDStatus = .start
-                    }
                     
-                    let sub1 = url.after(first: "=")
-                    let id = sub1.before(first: "/")
-                    let documentID = sub1.after(first: "=")
-                    
-                    viewModel.fetchMemoryByLink(userID: id, memoryID: documentID) { memory in
-                        if let memory = memory {
-                            viewModel.loadMemoryByIDStatus = .finish
-                            
-                            withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
-                                viewModel.detailMemory = memory
-                                viewModel.showDetail = true
-                            }
-                            
-                            withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8).delay(0.1)) {
-                                viewModel.animattion = true
-                            }
-                        } else {
-                            withAnimation {
-                                viewModel.loadMemoryByIDStatus = .finish
+                    if url.count == "https://mymemoriesapp.com/id=SobGhqJXcqajgNNrkSCdQFPsOFT2/memoryID=LEoPPtyeB9A0k2fDqiOp".count {
+                        
+                        memoryViewModel.fetchMemoryByLink(url) { memory in
+                            if let memory = memory {
+                                memoryViewModel.loadMemoryByIDStatus = .finish
                                 
-                                linkMemoryError = true
+                                withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
+                                    memoryViewModel.detailMemory = memory
+                                    memoryViewModel.showDetail = true
+                                }
+                                
+                                withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8).delay(0.1)) {
+                                    memoryViewModel.animattion = true
+                                }
+                            } else {
+                                withAnimation {
+                                    memoryViewModel.loadMemoryByIDStatus = .finish
+                                    
+                                    linkMemoryError = true
+                                }
                             }
                         }
+                    } else {
+                        linkMemoryError = true
                     }
                 }
             }
@@ -152,7 +159,7 @@ struct MemoryListView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.gray)
             
-            TextField("Поиск по названию", text: $searchText)
+            TextField("search", text: $searchText)
                 .overlay(alignment: .trailing) {
                     if !searchText.isEmpty {
                         Button {
@@ -176,19 +183,19 @@ struct MemoryListView: View {
     private var header: some View {
         VStack {
             HStack {
-                Title(text: "Мои Воспоминания")
+                Title(text: "mymemories")
                 
                 Spacer()
                 
                 Menu {
                     Button {
-                        viewModel.showNewMemoryView = true
+                        memoryViewModel.showNewMemoryView = true
                     } label: {
-                        Label("Новое воспоминание", systemImage: "plus")
+                        Label("new", systemImage: "plus")
                     }
                     
                     Button {
-                        viewModel.showProVersionView = true
+                        memoryViewModel.showProVersionView = true
                     } label: {
                         Label("Memory Pro", systemImage: "star")
                     }
@@ -204,7 +211,7 @@ struct MemoryListView: View {
                             }
                         }
                     } label: {
-                        Label("Выйти", systemImage: "rectangle.portrait.arrowtriangle.2.inward")
+                        Label("quit", systemImage: "rectangle.portrait.arrowtriangle.2.inward")
                     }
                 } label: {
                     ImageButton(systemName: "ellipsis", color: .white) { }
@@ -215,34 +222,60 @@ struct MemoryListView: View {
     }
     
     @ViewBuilder
+    private var quote: some View {
+        if let modelQuote = memoryViewModel.singleQuote {
+            VStack(alignment: .leading, spacing: 15) {
+                Text(modelQuote.text)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.leading)
+                
+                Text(modelQuote.author)
+                    .bold()
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding()
+            .background(.ultraThickMaterial)
+            .cornerRadius(15)
+            .shadow(radius: 3)
+        }
+    }
+    
+    @ViewBuilder
     private func MemoryCardView(_ memory: Memory, _ size: CGFloat) -> some View {
-        TabView(selection: viewModel.detailMemory?.uuid == memory.uuid ? $viewModel.imageID : nil) {
+        TabView(selection: memoryViewModel.detailMemory?.uuid == memory.uuid ? $memoryViewModel.imageID : nil) {
             ForEach(0..<memory.images.count, id: \.self) { i in
                 if let url = memory.images[i] {
-                    ZStack(alignment: .bottomTrailing) {
-                        ImageItem(type: .url(url: url), size: size - 20)
-                        
-                        VStack(alignment: .trailing) {
-                            Text(memory.name)
-                                .bold()
-                                .font(.system(size: size / 15))
-                                .foregroundColor(.white)
-                                .shadow(radius: 5)
-                            
-                            Text(memory.date, format: .dateTime.year().month().day())
-                                .bold()
-                                .font(.system(size: size / 20))
-                                .foregroundColor(.white)
-                                .shadow(radius: 5)
+                    ImageItem(type: .url(url: url), size: size - 20)
+                        .overlay(alignment: .bottomTrailing) {
+                            VStack(alignment: .trailing) {
+                                Text(memory.name)
+                                    .bold()
+                                    .font(.system(size: size / 15))
+                                    .foregroundColor(.white)
+                                    .shadow(radius: 5)
+                                
+                                Text(memory.date, format: .dateTime.year().month().day())
+                                    .bold()
+                                    .font(.system(size: size / 20))
+                                    .foregroundColor(.white)
+                                    .shadow(radius: 5)
+                            }
+                            .padding(size / 30)
                         }
-                        .padding(size / 30)
-                    }
+                        .contextMenu {
+                            Button {
+                                
+                            } label: {
+                                Label("saveimages", systemImage: "square.and.arrow.down")
+                            }
+                        }
                 }
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(width: size, height: size)
-        .disabled(!viewModel.showDetail)
+        .disabled(!memoryViewModel.showDetail)
         .matchedGeometryEffect(id: memory.uuid, in: animation)
         .shadow(radius: 3)
     }
@@ -268,8 +301,8 @@ struct MemoryListView: View {
                         descriptionView(text)
                     }
                 }
-                .opacity(viewModel.animattion ? 1 : 0)
-                .scaleEffect(viewModel.animattion ? 1 : 0.8, anchor: .bottom)
+                .opacity(memoryViewModel.animattion ? 1 : 0)
+                .scaleEffect(memoryViewModel.animattion ? 1 : 0.8, anchor: .bottom)
                 .padding(.top, size - 20)
             }
         }
@@ -282,11 +315,11 @@ struct MemoryListView: View {
         }
         .overlay(alignment: .topTrailing) {
             Menu {
-                if viewModel.shareURL == nil {
+                if memoryViewModel.shareURL == nil {
                     Button {
-                        viewModel.showNewMemoryView = true
+                        memoryViewModel.showNewMemoryView = true
                     } label: {
-                        Label("Редактировать", systemImage: "square.and.pencil")
+                        Label("edit", systemImage: "square.and.pencil")
                     }
                     
                     Button {
@@ -294,25 +327,23 @@ struct MemoryListView: View {
                         
                         shareApp(link: "https://mymemoriesapp.com/id=\(id)/memoryID=\(memory.id)")
                     } label: {
-                        Label("Поделиться", systemImage: "icloud.and.arrow.up")
+                        Label("share", systemImage: "icloud.and.arrow.up")
                     }
                     
                     Button {
                         deleteDialog = true
                     } label: {
-                        Label("Удалить", systemImage: "trash")
+                        Label("delete", systemImage: "trash")
                     }
                 } else {
                     Button {
                         if let id = Auth.auth().currentUser?.uid {
-                            Firestore.firestore().collection(id).document().setData(["name": memory.name, "date": memory.date, "text": memory.text ?? "", "images": memory.images.map { $0?.absoluteString }])
-                            
-                            viewModel.fetchAllMemories()
+                            Firestore.firestore().collection(id).document().setData(["name": memory.name, "date": memory.date, "text": memory.text ?? "", "images": memory.images.map { $0.absoluteString }])
                             
                             memoryIsDownloaded = true
                         }
                     } label: {
-                        Label("Добавить к себе", systemImage: "plus")
+                        Label("add2", systemImage: "plus")
                     }
                 }
             } label: {
@@ -322,13 +353,13 @@ struct MemoryListView: View {
         }
         .transition(.identity)
         .toast(isPresenting: $memoryIsDownloaded) {
-            AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: "Воспоминание добавлено!")
+            AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: memoryViewModel.language == "ru" ? "Воспоминание добавлено" : "Memory added")
         }
     }
     
     private func photoStack(_ memory: Memory, _ size: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 15) {
-            Title(text: "Фото")
+            Title(text: "photo")
                 .padding(.leading)
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -337,7 +368,7 @@ struct MemoryListView: View {
                         ForEach(0..<memory.images.count, id: \.self) { i in
                             Button {
                                 withAnimation {
-                                    viewModel.imageID = i
+                                    memoryViewModel.imageID = i
                                 }
                             } label: {
                                 if let url = memory.images[i] {
@@ -345,15 +376,15 @@ struct MemoryListView: View {
                                         .frame(width: size / 3, height: size / 3)
                                         .clipped()
                                         .cornerRadius(15)
-                                        .overlay(RoundedRectangle(cornerRadius: 15).stroke(lineWidth: (viewModel.imageID == i) ? 4 : 0).foregroundColor(Color.blue))
+                                        .overlay(RoundedRectangle(cornerRadius: 15).stroke(lineWidth: (memoryViewModel.imageID == i) ? 4 : 0).foregroundColor(Color.blue))
                                         .id(i)
                                 }
                             }
                         }
                     }
                     .padding(.leading)
-                    .onChange(of: viewModel.imageID) { _ in
-                        value.scrollTo(viewModel.imageID)
+                    .onChange(of: memoryViewModel.imageID) { _ in
+                        value.scrollTo(memoryViewModel.imageID)
                     }
                 }
             }
@@ -364,7 +395,7 @@ struct MemoryListView: View {
     @ViewBuilder
     private func descriptionView(_ text: String) -> some View {
         VStack(alignment: .leading, spacing: 15) {
-            Title(text: "Описание")
+            Title(text: "desc")
             
             Text(text)
                 .foregroundColor(.gray)
@@ -411,13 +442,13 @@ extension MemoryListView {
     }
     
     private func animationDismiss() {
-        viewModel.imageID = 0
+        memoryViewModel.imageID = 0
         
         withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
-            viewModel.animattion = false
-            viewModel.showDetail = false
-            viewModel.detailMemory = nil
-            viewModel.shareURL = nil
+            memoryViewModel.animattion = false
+            memoryViewModel.showDetail = false
+            memoryViewModel.detailMemory = nil
+            memoryViewModel.shareURL = nil
         }
     }
     
@@ -425,33 +456,9 @@ extension MemoryListView {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
         memory.images.forEach { url in
-            if let url = url {
-                Storage.storage().reference(forURL: url.absoluteString).delete { _ in }
-            }
+            Storage.storage().reference(forURL: url.absoluteString).delete { _ in }
         }
         
         Firestore.firestore().collection(id).document(memory.id).delete()
-        
-        withAnimation {
-            viewModel.fetchAllMemories()
-        }
-    }
-}
-
-extension String {
-    func before(first delimiter: Character) -> String {
-        if let index = firstIndex(of: delimiter) {
-            let before = prefix(upTo: index)
-            return String(before)
-        }
-        return ""
-    }
-    
-    func after(first delimiter: Character) -> String {
-        if let index = firstIndex(of: delimiter) {
-            let after = suffix(from: index).dropFirst()
-            return String(after)
-        }
-        return ""
     }
 }

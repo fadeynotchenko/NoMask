@@ -14,7 +14,8 @@ struct ImagePicker: UIViewControllerRepresentable {
     @Binding var videos: [URL]
     @Binding var picker: Bool
     
-    @EnvironmentObject private var viewModel: ViewModel
+    @EnvironmentObject private var viewModel: MemoryViewModel
+    @EnvironmentObject private var store: Store
     
     func makeCoordinator() -> Coordinator {
         ImagePicker.Coordinator(parent1: self)
@@ -24,7 +25,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         let photoLibrary = PHPhotoLibrary.shared()
         var config = PHPickerConfiguration(photoLibrary: photoLibrary)
         
-        config.selectionLimit = 10 - images.count
+        config.selectionLimit = (store.purchased.isEmpty ? 20 : 50) - images.count
         config.filter = .images
         
         let picker = PHPickerViewController(configuration: config)
@@ -62,14 +63,6 @@ struct ImagePicker: UIViewControllerRepresentable {
                     manager.requestImage(for: obj, targetSize: size, contentMode: .aspectFit, options: option) { image, _ in
                         if let image = image {
                             self.parent.images.append(image)
-                        }
-                    }
-                } else if obj.mediaType == .video {
-                    manager.requestAVAsset(forVideo: obj, options: nil) { video, _, _ in
-                        if let video = video as? AVURLAsset {
-                            self.parent.videos.append(video.url)
-                            
-                            
                         }
                     }
                 }
