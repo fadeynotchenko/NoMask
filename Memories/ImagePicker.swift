@@ -7,7 +7,6 @@
 import Foundation
 import SwiftUI
 import PhotosUI
-import LightCompressor
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var images: [Any]
@@ -15,7 +14,7 @@ struct ImagePicker: UIViewControllerRepresentable {
     @Binding var picker: Bool
     
     @EnvironmentObject private var viewModel: MemoryViewModel
-    @EnvironmentObject private var store: Store
+    @EnvironmentObject private var storeViewModel: StoreViewModel
     
     func makeCoordinator() -> Coordinator {
         ImagePicker.Coordinator(parent1: self)
@@ -25,7 +24,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         let photoLibrary = PHPhotoLibrary.shared()
         var config = PHPickerConfiguration(photoLibrary: photoLibrary)
         
-        config.selectionLimit = (store.purchased.isEmpty ? 20 : 50) - images.count
+        config.selectionLimit = (storeViewModel.isSubscription ? 0 : 20 - images.count)
         config.filter = .images
         
         let picker = PHPickerViewController(configuration: config)

@@ -7,47 +7,36 @@
 
 import SwiftUI
 import Firebase
+import RevenueCat
 
 @main
 struct MemoriesApp: App {
     
     @StateObject private var loginViewModel = LoginViewModel()
     @StateObject private var viewModel = MemoryViewModel()
-    @StateObject private var store = Store()
+    @StateObject private var storeViewModel = StoreViewModel()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(loginViewModel)
                 .environmentObject(viewModel)
-                .environmentObject(store)
+                .environmentObject(storeViewModel)
                 .environment(\.colorScheme, .dark)
                 .preferredColorScheme(.dark)
                 .onAppear(perform: UIApplication.shared.addTapGestureRecognizer)
-                .onAppear {
-                    if viewModel.language == "ru" {
-                        viewModel.singleQuote = ruQuotes.randomElement()
-                    } else {
-                        viewModel.singleQuote = engQuotes.randomElement()
-                    }
-                }
                 .onOpenURL { url in
                     if url.absoluteString.count > "https://mymemoriesapp.com/".count {
-                        withAnimation {
-                            viewModel.showNewMemoryView = false
-                            viewModel.showProVersionView = false
-                            
-                            viewModel.shareURL = url
-                        }
+                        viewModel.shareURL = url
                     }
-                }
-                .task {
-                    await store.fetchProducts()
                 }
         }
     }
     
     init() {
+        Purchases.logLevel = .error
+        Purchases.configure(withAPIKey: "")
+        
         FirebaseApp.configure()
         
         do {

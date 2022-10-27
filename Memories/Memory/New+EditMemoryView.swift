@@ -12,7 +12,6 @@ import FirebaseFirestore
 import Firebase
 import AlertToast
 import WidgetKit
-import BSImagePicker
 
 struct NewMemoryView: View {
     
@@ -36,7 +35,7 @@ struct NewMemoryView: View {
     @State private var selection = 0
     
     @EnvironmentObject private var viewModel: MemoryViewModel
-    @EnvironmentObject private var store: Store
+    @EnvironmentObject private var storeViewModel: StoreViewModel
     
     var body: some View {
         GeometryReader { reader in
@@ -46,7 +45,13 @@ struct NewMemoryView: View {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
                 VStack {
-                    header
+                    Header(text: viewModel.showDetail ? "edit" : "new") {
+                        ImageButton(systemName: "xmark", color: .white) {
+                            withAnimation {
+                                dismiss = false
+                            }
+                        }
+                    }
                     
                     TabView(selection: $selection) {
                         InformationView(width)
@@ -56,6 +61,7 @@ struct NewMemoryView: View {
                             .tag(1)
                     }
                     .ignoresSafeArea(.keyboard)
+                    .edgesIgnoringSafeArea(.bottom)
                     .tabViewStyle(.page(indexDisplayMode: .always))
                 }
                 .ignoresSafeArea(.keyboard)
@@ -65,7 +71,7 @@ struct NewMemoryView: View {
                     .edgesIgnoringSafeArea(.bottom)
             }
             .sheet(isPresented: $viewModel.showProVersionView) {
-                ProVersionView(dismiss: $viewModel.showProVersionView)
+                ProVersionView()
             }
             .overlay {
                 if download {
@@ -77,42 +83,22 @@ struct NewMemoryView: View {
                 }
             }
             .toast(isPresenting: $error) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: viewModel.language == "ru" ? "Ошибка" : "Error", subTitle: viewModel.language == "ru" ? "Требуется доступ к галерее" : "Gallery access required")
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка" : "Error", subTitle: Constants.language == "ru" ? "Требуется доступ к галерее" : "Gallery access required")
             }
             .toast(isPresenting: $downloadError) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: viewModel.language == "ru" ? "Ошибка загрузки" : "Loading error")
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка загрузки" : "Loading error")
             }
             .onAppear {
                 if let memory = viewModel.detailMemory, viewModel.showDetail {
                     name = memory.name
                     date = memory.date
-                    if let text = memory.text {
-                        self.text = text
-                    }
+                    text = memory.text
                     
                     images = memory.images.compactMap { $0 }
                 }
             }
         }
     }
-    
-    private var header: some View {
-        VStack {
-            HStack {
-                Title(text: viewModel.showDetail ? "edit" : "new")
-                
-                Spacer()
-                
-                ImageButton(systemName: "xmark", color: .white) {
-                    withAnimation {
-                        dismiss = false
-                    }
-                }
-            }
-        }
-        .padding()
-    }
-    
     
     private func InformationView(_ width: CGFloat) -> some View {
         VStack(spacing: 15) {
@@ -134,7 +120,7 @@ struct NewMemoryView: View {
                     .padding()
                     .background(.ultraThickMaterial)
                     .cornerRadius(15)
-                    .lineLimit(1...5)
+                    .lineLimit(3...5)
             } else {
                 TextField("optional", text: $text)
                     .foregroundColor(.gray)
@@ -200,12 +186,12 @@ struct NewMemoryView: View {
                 }
             }
             
-            if store.purchased.isEmpty {
+            if storeViewModel.isSubscription == false {
                 VStack(spacing: 5) {
                     Text("limit")
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
-                    
+
                     Button("pro") {
                         viewModel.showProVersionView = true
                     }
@@ -272,7 +258,9 @@ struct NewMemoryView: View {
             break
         }
     }
-    
+}
+
+extension NewMemoryView {
     private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
@@ -301,7 +289,7 @@ struct NewMemoryView: View {
                                 }
                                 
                             } else {
-                                db.document().setData(["name": name, "date": date, "text": text, "likes": 0, "liked": false, "images": imageURLs])
+                                db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
                             }
                             
                             completion(true)
@@ -342,12 +330,7 @@ struct NewMemoryView: View {
         let storage = Storage.storage().reference().child(id).child("images").child("\(UUID().uuidString).jpg")
         var data: Data?
         
-        if store.purchased.isEmpty {
-            data = image.jpegData(compressionQuality: 0.4)
-            print("low")
-        } else {
-            data = image.pngData()
-        }
+        data = image.jpegData(compressionQuality: 0.7)
         
         if let data = data {
             let _ = storage.putData(data) { _, error in

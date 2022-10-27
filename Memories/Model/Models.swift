@@ -13,7 +13,7 @@ struct Memory: Identifiable {
     var id: String
     var name: String
     var date: Date
-    var text: String?
+    var text: String
     
     var images = [URL]()
 }

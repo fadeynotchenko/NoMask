@@ -13,12 +13,16 @@ import Kingfisher
 import FirebaseAuth
 
 struct Provider: TimelineProvider {
+    
     func placeholder(in context: Context) -> SimpleEntry {
         SimpleEntry(date: Date())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        completion(SimpleEntry(date: Date()))
+        fetchFromFirebase { memory in
+            let entry = SimpleEntry(date: Date(), memory: memory)
+            completion(entry)
+        }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
@@ -132,8 +136,8 @@ struct RandomWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             RandomWidgetEntryView(entry: entry)
         }
-        .supportedFamilies([.systemSmall, .systemLarge, .systemExtraLarge])
-        .configurationDisplayName("Cлучайное воспоминание")
-        .description("Каждые 12 часов случаным образом выбирается одно из воспоминаний")
+        .supportedFamilies([.systemSmall, .systemLarge])
+        .configurationDisplayName("random")
+        .description("random2")
     }
 }

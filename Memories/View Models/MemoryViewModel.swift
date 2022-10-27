@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Firebase
+import FirebaseStorage
 import FirebaseFirestore
 import FirebaseAuth
 import AVKit
@@ -20,17 +21,16 @@ class MemoryViewModel: ObservableObject {
     
     @Published var detailMemory: Memory?
     @Published var showDetail = false
-    @Published var animattion = false
+    @Published var animation = false
     @Published var imageID = 0
     
     @Published var shareURL: URL?
     
     @Published var showNewMemoryView = false
     @Published var showProVersionView = false
+    @Published var showPhotoGalleryView = false
     
     @Published var singleQuote: Quote?
-    
-    @Published var language = (Locale.preferredLanguages[0] as String).components(separatedBy: "-").first
     
     func fetchAllMemories() {
         guard let id = Auth.auth().currentUser?.uid else { return }
@@ -74,7 +74,7 @@ class MemoryViewModel: ObservableObject {
                 let date = timestamp.dateValue()
                 let text = data["text"] as? String
                 
-                completion(Memory(id: document.documentID, name: name, date: date, text: text, images: images.map { URL(string: $0)! }))
+                completion(Memory(id: document.documentID, name: name, date: date, text: text ?? "", images: images.map { URL(string: $0)! }))
                 
             } else {
                 completion(nil)
@@ -82,17 +82,17 @@ class MemoryViewModel: ObservableObject {
         }
     }
     
-//    func downloadImage(_ url: URL, _ completion: @escaping (Bool) -> Void) {
-//        Storage.storage().reference(forURL: url).getData(maxSize: 1 * 1024 * 1024) { data, err in
-//            if let data = data, let image = UIImage(data: data), err == nil {
-//                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-//                
-//                completion(true)
-//            } else {
-//                completion(false)
-//            }
-//        }
-//    }
+    func downloadImage(_ url: URL, _ completion: @escaping (Bool) -> Void) {
+        Storage.storage().reference(forURL: url.absoluteString).getData(maxSize: 10 * 1024 * 1024) { data, err in
+            if let data = data, let image = UIImage(data: data), err == nil {
+                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                
+                completion(true)
+            } else {
+                completion(false)
+            }
+        }
+    }
 }
 
 extension String {
