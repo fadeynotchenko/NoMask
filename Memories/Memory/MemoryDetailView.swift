@@ -21,7 +21,6 @@ struct MemoryDetailView: View {
     
     @State private var deleteDialog = false
     @State private var memoryIsDownloaded = false
-    @State private var imageDownloaded = false
     
     @EnvironmentObject private var memoryViewModel: MemoryViewModel
     
@@ -96,9 +95,6 @@ struct MemoryDetailView: View {
                     .padding()
             }
         }
-        .toast(isPresenting: $imageDownloaded) {
-            AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: Constants.language == "ru" ? "Фотография добавлена в галерею" : "Photo added to gallery")
-        }
         .toast(isPresenting: $memoryIsDownloaded) {
             AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: Constants.language == "ru" ? "Воспоминание добавлено" : "Memory added")
         }
@@ -161,17 +157,6 @@ struct MemoryDetailView: View {
                                         .cornerRadius(15)
                                         .overlay(RoundedRectangle(cornerRadius: 15).stroke(lineWidth: (memoryViewModel.imageID == i) ? 4 : 0).foregroundColor(Color.blue))
                                         .id(i)
-                                        .contextMenu {
-                                            Button {
-                                                memoryViewModel.downloadImage(url) { ans in
-                                                    if ans {
-                                                        imageDownloaded = true
-                                                    }
-                                                }
-                                            } label: {
-                                                Label("saveimages", systemImage: "square.and.arrow.down")
-                                            }
-                                        }
                                 }
                             }
                         }

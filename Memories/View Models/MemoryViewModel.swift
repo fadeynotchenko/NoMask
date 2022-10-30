@@ -16,9 +16,11 @@ class MemoryViewModel: ObservableObject {
     
     @Published var memories = [Memory]()
     
+    //load data
     @Published var loadStatus: LoadDataStatus = .start
     @Published var loadMemoryByIDStatus: LoadDataStatus = .finish
     
+    //detail memory
     @Published var detailMemory: Memory?
     @Published var showDetail = false
     @Published var animation = false
@@ -26,9 +28,12 @@ class MemoryViewModel: ObservableObject {
     
     @Published var shareURL: URL?
     
+    //views
     @Published var showNewMemoryView = false
     @Published var showProVersionView = false
     @Published var showPhotoGalleryView = false
+    
+    @Published var imageDownloaded = false
     
     @Published var singleQuote: Quote?
     

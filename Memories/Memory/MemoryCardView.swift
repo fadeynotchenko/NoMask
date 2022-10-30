@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AlertToast
 
 struct MemoryCardView: View {
     
@@ -34,6 +35,17 @@ struct MemoryCardView: View {
                             }
                             .padding(size / 30)
                             .shadow(radius: 3)
+                        }
+                        .contextMenu {
+                            Button {
+                                memoryViewModel.downloadImage(url) { ans in
+                                    if ans {
+                                        memoryViewModel.imageDownloaded = true
+                                    }
+                                }
+                            } label: {
+                                Label("saveimages", systemImage: "square.and.arrow.down")
+                            }
                         }
                 }
             }

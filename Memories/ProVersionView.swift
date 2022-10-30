@@ -24,13 +24,22 @@ struct ProVersionView: View {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 15) {
-                    if offering != nil {
-                        Group {
-                            Header(text: "Memories Pro") {
-                                ImageButton(systemName: "xmark", color: .white) {
-                                    memoryViewModel.showProVersionView = false
-                                }
+                    Group {
+                        Header(text: "Memories Pro") {
+                            ImageButton(systemName: "xmark", color: .white) {
+                                memoryViewModel.showProVersionView = false
                             }
+                        }
+                        
+                        if offering == nil {
+                            Spacer()
+                            
+                            ProgressView()
+                                .shadow(radius: 3)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            
+                            Spacer()
+                        } else {
                             
                             proTitle
                             
@@ -46,14 +55,6 @@ struct ProVersionView: View {
                             
                             aboutText
                         }
-                    } else {
-                        Spacer()
-                        
-                        ProgressView()
-                            .shadow(radius: 3)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        
-                        Spacer()
                     }
                 }
                 .toast(isPresenting: $error) {
@@ -132,7 +133,7 @@ struct ProVersionView: View {
         }
         .disabled(storeViewModel.isSubscription)
     }
-
+    
     private var aboutText: some View {
         VStack(alignment: .leading, spacing: 5) {
             Group {

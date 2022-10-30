@@ -85,6 +85,9 @@ struct MemoryListView: View {
                         .shadow(radius: 3)
                 }
             }
+            .toast(isPresenting: $memoryViewModel.imageDownloaded) {
+                AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: Constants.language == "ru" ? "Фотография добавлена в галерею" : "Photo added to gallery")
+            }
             .fullScreenCover(isPresented: $memoryViewModel.showNewMemoryView) {
                 NewMemoryView(dismiss: $memoryViewModel.showNewMemoryView)
             }

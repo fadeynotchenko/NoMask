@@ -61,7 +61,6 @@ struct NewMemoryView: View {
                             .tag(1)
                     }
                     .ignoresSafeArea(.keyboard)
-                    .edgesIgnoringSafeArea(.bottom)
                     .tabViewStyle(.page(indexDisplayMode: .always))
                 }
                 .ignoresSafeArea(.keyboard)
