@@ -98,7 +98,7 @@ struct RandomWidgetEntryView : View {
                     Color("Background").edgesIgnoringSafeArea(.all)
                     
                     VStack {
-                        Text("Загрузка...")
+                        Text("download")
                             .foregroundColor(.gray)
                     }
                 }

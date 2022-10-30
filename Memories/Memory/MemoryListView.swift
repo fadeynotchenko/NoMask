@@ -85,10 +85,10 @@ struct MemoryListView: View {
                         .shadow(radius: 3)
                 }
             }
-            .sheet(isPresented: $memoryViewModel.showNewMemoryView) {
+            .fullScreenCover(isPresented: $memoryViewModel.showNewMemoryView) {
                 NewMemoryView(dismiss: $memoryViewModel.showNewMemoryView)
             }
-            .sheet(isPresented: $memoryViewModel.showProVersionView) {
+            .fullScreenCover(isPresented: $memoryViewModel.showProVersionView) {
                 ProVersionView()
             }
             .onChange(of: memoryViewModel.shareURL) { url in

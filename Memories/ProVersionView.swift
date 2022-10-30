@@ -20,45 +20,53 @@ struct ProVersionView: View {
     
     var body: some View {
         GeometryReader { reader in
-            VStack(spacing: 15) {
-                if offering != nil {
-                    Header(text: "Memories Pro") {
-                        ImageButton(systemName: "xmark", color: .white) {
-                            memoryViewModel.showProVersionView = false
+            ZStack {
+                Color("Background").edgesIgnoringSafeArea(.all)
+                
+                VStack(spacing: 15) {
+                    if offering != nil {
+                        Group {
+                            Header(text: "Memories Pro") {
+                                ImageButton(systemName: "xmark", color: .white) {
+                                    memoryViewModel.showProVersionView = false
+                                }
+                            }
+                            
+                            proTitle
+                            
+                            benefit(text: "protext1", secondText: "second1")
+                            
+                            benefit(text: "protext2", secondText: "second2")
+                            
+                            Spacer()
+                            
+                            buyButton
+                            
+                            restoreButton
+                            
+                            aboutText
                         }
+                    } else {
+                        Spacer()
+                        
+                        ProgressView()
+                            .shadow(radius: 3)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        Spacer()
                     }
-                    
-                    proTitle
-                    
-                    benefit(text: "protext1", secondText: "second1")
-                    
-                    benefit(text: "protext2", secondText: "second2")
-                    
-                    Spacer()
-                    
-                    buyButton
-                    
-                    restoreButton
-                } else {
-                    Spacer()
-                    
-                    ProgressView()
-                        .shadow(radius: 3)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    Spacer()
                 }
-            }
-            .toast(isPresenting: $error) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка" : "Error")
-            }
-            .toast(isPresenting: $restored) {
-                AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: Constants.language == "ru" ? "Покупки восстановлены" : "Purchases restored")
-            }
-            .onAppear {
-                Purchases.shared.getOfferings { offerings, error in
-                    if let offer = offerings?.current, error == nil {
-                        self.offering = offer
+                .toast(isPresenting: $error) {
+                    AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка" : "Error")
+                }
+                .toast(isPresenting: $restored) {
+                    AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: Constants.language == "ru" ? "Покупки восстановлены" : "Purchases restored")
+                }
+                .onAppear {
+                    Purchases.shared.getOfferings { offerings, error in
+                        if let offer = offerings?.current, error == nil {
+                            self.offering = offer
+                        }
                     }
                 }
             }
@@ -69,7 +77,6 @@ struct ProVersionView: View {
         Text("protitle")
             .foregroundColor(.white)
             .bold()
-            .font(.title3)
             .frame(maxWidth: .infinity, alignment: .leading)
             .multilineTextAlignment(.leading)
             .padding()
@@ -106,6 +113,7 @@ struct ProVersionView: View {
                 }
             }
             .disabled(storeViewModel.isSubscription)
+            .padding(.top)
         }
     }
     
@@ -125,4 +133,26 @@ struct ProVersionView: View {
         .disabled(storeViewModel.isSubscription)
     }
 
+    private var aboutText: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Group {
+                Text("pro1")
+                
+                HStack(spacing: 5) {
+                    Link("terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                        .foregroundColor(.blue)
+                    
+                    Text("and")
+                }
+                
+                Link("privacy", destination: URL(string: "https://mymemoriesapp.com/Privacy/Privacy.html")!)
+                    .foregroundColor(.blue)
+            }
+            .font(.system(size: 16))
+            .foregroundColor(.gray)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding()
+    }
 }

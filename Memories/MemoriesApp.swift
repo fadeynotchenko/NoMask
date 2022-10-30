@@ -35,7 +35,7 @@ struct MemoriesApp: App {
     
     init() {
         Purchases.logLevel = .error
-        Purchases.configure(withAPIKey: "")
+        Purchases.configure(withAPIKey: Secrets.API)
         
         FirebaseApp.configure()
         

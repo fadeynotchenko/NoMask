@@ -31,6 +31,7 @@
 		43475E97290975C8000366C0 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43475E96290975C8000366C0 /* MemoryDetailView.swift */; };
 		43475E99290975FE000366C0 /* MemoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43475E98290975FE000366C0 /* MemoryCardView.swift */; };
 		43475E9C290ADC7B000366C0 /* PhotoGalleryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43475E9B290ADC7B000366C0 /* PhotoGalleryDetailView.swift */; };
+		434827A6290C1AD300F6700A /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434827A5290C1AD300F6700A /* Secrets.swift */; };
 		434DC0212906EDC0000724B7 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 434DC0202906EDC0000724B7 /* RevenueCat */; };
 		434F545528FF044F003EC60C /* Constant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434F545428FF044F003EC60C /* Constant.swift */; };
 		434F545728FF0469003EC60C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434F545628FF0469003EC60C /* Models.swift */; };
@@ -101,6 +102,7 @@
 		43475E98290975FE000366C0 /* MemoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryCardView.swift; sourceTree = "<group>"; };
 		43475E9B290ADC7B000366C0 /* PhotoGalleryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoGalleryDetailView.swift; sourceTree = "<group>"; };
 		434771D328F5E5FB00BE0214 /* MemoryWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MemoryWidgetExtension.entitlements; sourceTree = "<group>"; };
+		434827A5290C1AD300F6700A /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 		434F545428FF044F003EC60C /* Constant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constant.swift; sourceTree = "<group>"; };
 		434F545628FF0469003EC60C /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		43932F692901A14F008D66B7 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -226,6 +228,7 @@
 			isa = PBXGroup;
 			children = (
 				434F545428FF044F003EC60C /* Constant.swift */,
+				434827A5290C1AD300F6700A /* Secrets.swift */,
 			);
 			path = Constans;
 			sourceTree = "<group>";
@@ -396,6 +399,7 @@
 				439C0F0C28EB9E46004BC325 /* MemoryViewModel.swift in Sources */,
 				43A18E1E2905C5BD00F91B37 /* StoreViewModel.swift in Sources */,
 				43332E3E28EB4FE6006E017B /* MemoryListView.swift in Sources */,
+				434827A6290C1AD300F6700A /* Secrets.swift in Sources */,
 				43332E1C28EB3D2B006E017B /* ContentView.swift in Sources */,
 				43475E99290975FE000366C0 /* MemoryCardView.swift in Sources */,
 				43475E97290975C8000366C0 /* MemoryDetailView.swift in Sources */,
@@ -619,7 +623,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Memories/Info.plist;
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Gallery access required";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Gallery access is required to add photos to Memories.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -657,7 +661,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Memories/Info.plist;
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Gallery access required";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Gallery access is required to add photos to Memories.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

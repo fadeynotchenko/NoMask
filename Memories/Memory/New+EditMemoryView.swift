@@ -224,7 +224,9 @@ struct NewMemoryView: View {
         .padding()
         .shadow(radius: 3)
     }
-    
+}
+
+extension NewMemoryView {
     private func openImagePicker() {
         let status = PHPhotoLibrary.authorizationStatus()
         
@@ -258,9 +260,7 @@ struct NewMemoryView: View {
             break
         }
     }
-}
-
-extension NewMemoryView {
+    
     private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         

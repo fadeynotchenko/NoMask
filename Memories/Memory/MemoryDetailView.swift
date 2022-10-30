@@ -116,8 +116,8 @@ struct MemoryDetailView: View {
         } message: {
             Text("deletequestion")
         }
-        .sheet(isPresented: $memoryViewModel.showPhotoGalleryView) {
-            PhotoGalleryDetailView()
+        .fullScreenCover(isPresented: $memoryViewModel.showPhotoGalleryView) {
+            PhotoGalleryDetailView(width: size)
         }
         .transition(.identity)
     }
@@ -131,12 +131,14 @@ struct MemoryDetailView: View {
                 
                 Spacer()
                 
+                //next update
+                
                 Button {
                     memoryViewModel.showPhotoGalleryView = true
                 } label: {
                     HStack(spacing: 5) {
                         Text("all")
-                        
+
                         Text("(\(memory.images.count))")
                     }
                     .foregroundColor(.blue)
