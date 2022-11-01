@@ -15,7 +15,21 @@ struct Memory: Identifiable {
     var date: Date
     var text: String
     
+    var images = [URL?]()
+}
+
+struct GlobalMemory: Identifiable {
+    var uuid = UUID()
+    var id: String
+    var name: String
+    var date: Date
+    var text: String
+    
     var images = [URL]()
+    
+    var userName: String
+    var likes: [String]
+    var createdDate: Date
 }
 
 enum LoadDataStatus: Hashable {

@@ -11,9 +11,24 @@ struct ContentView: View {
     
     @AppStorage("isLoggin") private var isLoggin = false
     
+    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    
     var body: some View {
         if isLoggin {
-            MemoryListView()
+//            TabView(selection: $memoryViewModel.memoryTabSelection) {
+//                MyMemoriesView()
+//                    .tag(0)
+//
+//                GlobalMemoriesView()
+//                    .tag(1)
+//            }
+//            .tabViewStyle(.page(indexDisplayMode: .never))
+//            .edgesIgnoringSafeArea(.all)
+//            .onAppear {
+//                memoryViewModel.fetch()
+//            }
+            
+            MyMemoriesView()
         } else {
             LoginView()
         }

@@ -11,9 +11,8 @@ import PhotosUI
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var images: [Any]
     @Binding var videos: [URL]
-    @Binding var picker: Bool
     
-    @EnvironmentObject private var viewModel: MemoryViewModel
+    @EnvironmentObject private var memoryViewModel: MemoryViewModel
     @EnvironmentObject private var storeViewModel: StoreViewModel
     
     func makeCoordinator() -> Coordinator {
@@ -46,7 +45,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         }
         
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            self.parent.picker = false
+            self.parent.memoryViewModel.showPickerView = false
             
             let identifiers = results.compactMap(\.assetIdentifier)
             let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: identifiers, options: nil)
@@ -54,7 +53,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             let manager = PHImageManager.default()
             
             fetchResult.enumerateObjects { obj, i, _ in
-                let size = CGSize(width: 1200, height: 1200)
+                let size = CGSize(width: obj.pixelWidth, height: obj.pixelHeight)
                 
                 let option = PHImageRequestOptions()
                 option.isSynchronous = true

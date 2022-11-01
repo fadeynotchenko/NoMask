@@ -99,6 +99,7 @@ struct ProVersionView: View {
                 .multilineTextAlignment(.leading)
         }
         .padding(.horizontal)
+        .shadow(radius: 3)
     }
     
     @ViewBuilder

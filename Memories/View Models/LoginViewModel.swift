@@ -30,13 +30,8 @@ class LoginViewModel: ObservableObject {
             
             withAnimation {
                 UserDefaults.standard.set(true, forKey: "isLoggin")
-                
-                if let id = Auth.auth().currentUser?.uid {
-                    UserDefaults.standard.set(id, forKey: "userID")
-                    
-                    print("userID: \(String(describing: Auth.auth().currentUser?.uid))")
-                }
             }
+            
         }
     }
 }

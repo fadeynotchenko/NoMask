@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct PhotoGalleryDetailView: View {
     
@@ -30,12 +31,14 @@ struct PhotoGalleryDetailView: View {
                     LazyVGrid(columns: [GridItem(), GridItem()], spacing: 15) {
                         if let memory = memoryViewModel.detailMemory {
                             ForEach(memory.images, id: \.self) { url in
-                                Button {
-                                    withAnimation {
-                                        fullScreenURLImage = url
+                                if let url = url {
+                                    Button {
+                                        withAnimation {
+                                            fullScreenURLImage = url
+                                        }
+                                    } label: {
+                                        ImageItem(type: .url(url: url), size: width / 2.3)
                                     }
-                                } label: {
-                                    ImageItem(type: .url(url: url), size: width / 2.3)
                                 }
                             }
                         }
@@ -46,7 +49,10 @@ struct PhotoGalleryDetailView: View {
             .overlay {
                 if let url = fullScreenURLImage {
                     ZStack {
-                        ImageItem(type: .url(url: url), size: width)
+                        KFImage(url)
+                            .loadDiskFileSynchronously()
+                            .resizable()
+                            .scaledToFit()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color("Background"))

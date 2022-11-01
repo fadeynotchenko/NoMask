@@ -45,7 +45,8 @@ struct LoginView: View {
                             guard let credential = user.credential as? ASAuthorizationAppleIDCredential else { return }
                             
                             loginViewModel.auth(credential: credential)
-                        case .failure(_):
+                        case .failure(let err):
+                            print(err.localizedDescription)
                             break
                         }
                     }

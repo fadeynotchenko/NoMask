@@ -11,6 +11,7 @@ import Firebase
 import FirebaseFirestore
 import Kingfisher
 import FirebaseAuth
+import FirebaseStorage
 
 struct Provider: TimelineProvider {
     
@@ -43,14 +44,15 @@ struct Provider: TimelineProvider {
             return
         }
         
-        Firestore.firestore().collection(id).getDocuments { snap, _  in
-            if let document = snap?.documents.randomElement() {
+        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").getDocuments { snapshots, error  in
+            if let document = snapshots?.documents.randomElement(), error == nil {
                 let data = document.data()
                 
-                if let name = data["name"] as? String, let time = data["date"] as? Timestamp, let images = data["images"] as? [String] {
+                if let name = data["name"] as? String, let time = data["date"] as? Timestamp, let images = data["images"] as? [String], let randomImage = images.randomElement() {
                     
                     let date = time.dateValue()
-                    if let data = try? Data(contentsOf: URL(string: images.randomElement()!)!) {
+                    
+                    if let data = try? Data(contentsOf: URL(string: randomImage)!) {
                         completion(WidgetMemory(name: name, date: date, image: data))
                     }
                 }
@@ -124,7 +126,7 @@ struct RandomWidget: Widget {
         FirebaseApp.configure()
         
         do {
-            try Auth.auth().useUserAccessGroup("CQ3SGH4DSY.FN.Memories")
+            try Auth.auth().useUserAccessGroup(Secrets.AccessGroup)
         } catch {
             print(error.localizedDescription)
         }

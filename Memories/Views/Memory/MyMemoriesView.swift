@@ -14,7 +14,7 @@ import FirebaseFirestore
 import FirebaseAuth
 import WidgetKit
 
-struct MemoryListView: View {
+struct MyMemoriesView: View {
     
     @State private var searchText = ""
     
@@ -43,18 +43,18 @@ struct MemoryListView: View {
                 if memories.isEmpty {
                     Text("empty")
                         .foregroundColor(.gray)
-                } else if memoryViewModel.loadStatus == .start {
+                } else if memoryViewModel.loadMyMemoriesStatus == .start {
                     ProgressView()
                         .shadow(radius: 3)
                 }
                 
                 ScrollView {
                     LazyVStack(spacing: 20) {
-                        quote
-                            .frame(width: width - 20)
-                        
-                        searchView
-                            .frame(width: width - 20)
+//                        quote
+//                            .frame(width: width - 20)
+//
+//                        searchView
+//                            .frame(width: width - 20)
                         
                         ForEach(memories.sorted { $0.date > $1.date }, id: \.id) { memory in
                             Button {
@@ -85,22 +85,25 @@ struct MemoryListView: View {
                         .shadow(radius: 3)
                 }
             }
-            .toast(isPresenting: $memoryViewModel.imageDownloaded) {
-                AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: Constants.language == "ru" ? "Фотография добавлена в галерею" : "Photo added to gallery")
+            
+            .sheet(isPresented: $memoryViewModel.showNewMemoryView) {
+                NewMemoryView()
             }
-            .fullScreenCover(isPresented: $memoryViewModel.showNewMemoryView) {
-                NewMemoryView(dismiss: $memoryViewModel.showNewMemoryView)
-            }
-            .fullScreenCover(isPresented: $memoryViewModel.showProVersionView) {
+            .sheet(isPresented: $memoryViewModel.showProVersionView) {
                 ProVersionView()
+            }
+            .sheet(isPresented: $memoryViewModel.showProfileView) {
+                ProfileView()
             }
             .onChange(of: memoryViewModel.shareURL) { url in
                 
                 if let url = url?.absoluteString {
                     
+                    memoryViewModel.showPickerView = false
                     memoryViewModel.showNewMemoryView = false
                     memoryViewModel.showProVersionView = false
                     memoryViewModel.showPhotoGalleryView = false
+                    memoryViewModel.showProfileView = false
                     
                     if url.count == "https://mymemoriesapp.com/id=SobGhqJXcqajgNNrkSCdQFPsOFT2/memoryID=LEoPPtyeB9A0k2fDqiOp".count {
                         
@@ -123,8 +126,11 @@ struct MemoryListView: View {
                     }
                 }
             }
+            .toast(isPresenting: $linkMemoryError) {
+                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: "Error")
+            }
             .onAppear {
-                memoryViewModel.fetchAllMemories()
+                memoryViewModel.fetchMyMemories()
                 
                 if Constants.language == "ru" {
                     memoryViewModel.singleQuote = Constants.ruQuotes.randomElement()
@@ -165,6 +171,12 @@ struct MemoryListView: View {
         Header(text: "mymemories") {
             Menu {
                 Button {
+                    memoryViewModel.showProfileView = true
+                } label: {
+                    Label("profile", systemImage: "person")
+                }
+                
+                Button {
                     if memories.count >= 3 && storeViewModel.isSubscription == false {
                         memoryViewModel.showProVersionView = true
                     } else {
@@ -178,20 +190,6 @@ struct MemoryListView: View {
                     memoryViewModel.showProVersionView = true
                 } label: {
                     Label("Memories Pro", systemImage: "star")
-                }
-                
-                Button {
-                    withAnimation {
-                        do {
-                            try Auth.auth().signOut()
-                            
-                            UserDefaults.standard.set(false, forKey: "isLoggin")
-                        } catch {
-                            //error
-                        }
-                    }
-                } label: {
-                    Label("quit", systemImage: "rectangle.portrait.arrowtriangle.2.inward")
                 }
             } label: {
                 ImageButton(systemName: "ellipsis", color: .white) { }
@@ -220,7 +218,7 @@ struct MemoryListView: View {
     }
 }
 
-extension MemoryListView {
+extension MyMemoriesView {
     func openDetailView(_ memory: Memory) {
         withAnimation(.interactiveSpring(response: 0.8, dampingFraction: 0.8, blendDuration: 0.8)) {
             memoryViewModel.detailMemory = memory

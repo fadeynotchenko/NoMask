@@ -15,8 +15,6 @@ import WidgetKit
 
 struct NewMemoryView: View {
     
-    @Binding var dismiss: Bool
-    
     @State private var name = ""
     @State private var text = ""
     @State private var date = Date()
@@ -24,15 +22,14 @@ struct NewMemoryView: View {
     @State private var images = [Any]()
     @State private var videos = [URL]()
     
-    @State private var deletedImages = [URL]()
-    
-    @State private var showPickerView = false
     @State private var error = false
     
     @State private var download = false
     @State private var downloadError = false
     
     @State private var selection = 0
+    
+    @State private var downloadCount = 0
     
     @EnvironmentObject private var viewModel: MemoryViewModel
     @EnvironmentObject private var storeViewModel: StoreViewModel
@@ -48,7 +45,7 @@ struct NewMemoryView: View {
                     Header(text: viewModel.showDetail ? "edit" : "new") {
                         ImageButton(systemName: "xmark", color: .white) {
                             withAnimation {
-                                dismiss = false
+                                viewModel.showNewMemoryView = false
                             }
                         }
                     }
@@ -65,8 +62,8 @@ struct NewMemoryView: View {
                 }
                 .ignoresSafeArea(.keyboard)
             }
-            .sheet(isPresented: $showPickerView) {
-                ImagePicker(images: $images, videos: $videos, picker: $showPickerView)
+            .sheet(isPresented: $viewModel.showPickerView) {
+                ImagePicker(images: $images, videos: $videos)
                     .edgesIgnoringSafeArea(.bottom)
             }
             .sheet(isPresented: $viewModel.showProVersionView) {
@@ -74,11 +71,18 @@ struct NewMemoryView: View {
             }
             .overlay {
                 if download {
-                    ProgressView()
-                        .frame(width: 50, height: 50)
-                        .background(.ultraThickMaterial)
-                        .cornerRadius(15)
-                        .shadow(radius: 3)
+                    VStack(spacing: 5) {
+                        ProgressView()
+                        
+                        Text("\(downloadCount) / \(images.count)")
+                            .foregroundColor(.gray)
+                            .bold()
+                            .font(.system(size: 12))
+                    }
+                    .padding()
+                    .background(.ultraThickMaterial)
+                    .cornerRadius(15)
+                    .shadow(radius: 3)
                 }
             }
             .toast(isPresenting: $error) {
@@ -93,7 +97,7 @@ struct NewMemoryView: View {
                     date = memory.date
                     text = memory.text
                     
-                    images = memory.images.compactMap { $0 }
+                    images = memory.images
                 }
             }
         }
@@ -147,6 +151,7 @@ struct NewMemoryView: View {
         
     }
     
+    @ViewBuilder
     private func MediaView(_ width: CGFloat) -> some View {
         VStack(spacing: 15) {
             Title(text: "photo")
@@ -154,9 +159,14 @@ struct NewMemoryView: View {
             
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVGrid(columns: [GridItem(), GridItem()], spacing: 15) {
-                    AddMediaButton(width: width / 2.3) {
-                        openImagePicker()
-                        
+                    if storeViewModel.isSubscription {
+                        AddMediaButton(width: width / 2.3) {
+                            openImagePicker()
+                        }
+                    } else if images.count < 20 {
+                        AddMediaButton(width: width / 2.3) {
+                            openImagePicker()
+                        }
                     }
                     
                     ForEach(0..<images.count, id: \.self) { i in
@@ -172,8 +182,6 @@ struct NewMemoryView: View {
                         } else if let url = images[i] as? URL {
                             ImageItem(type: .url(url: url), size: width / 2.3)
                                 .deleteButtonOverlay {
-                                    deletedImages.append(url)
-                                    
                                     withAnimation {
                                         images = images.filter {
                                             $0 as? URL != url
@@ -201,19 +209,19 @@ struct NewMemoryView: View {
             TextButton(text: viewModel.showDetail ? "save" : "add", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
                 withAnimation {
                     download = true
-                }
-                
-                uploadToFirebase { ans in
-                    withAnimation {
-                        download = false
-                    }
                     
-                    if ans {
-                        dismiss = false
+                    uploadToFirebase { ans in
+                        withAnimation {
+                            download = false
+                        }
                         
-                        WidgetCenter.shared.reloadAllTimelines()
-                    } else {
-                        downloadError = true
+                        if ans {
+                            viewModel.showNewMemoryView = false
+                            
+                            WidgetCenter.shared.reloadAllTimelines()
+                        } else {
+                            downloadError = true
+                        }
                     }
                 }
             }
@@ -230,12 +238,13 @@ extension NewMemoryView {
         let status = PHPhotoLibrary.authorizationStatus()
         
         switch status {
+            
         case .notDetermined:
             PHPhotoLibrary.requestAuthorization { status in
                 switch status {
                 case .authorized, .limited:
                     withAnimation {
-                        showPickerView = true
+                        viewModel.showPickerView = true
                     }
                 case .denied, .restricted:
                     withAnimation {
@@ -247,13 +256,14 @@ extension NewMemoryView {
                     break
                 }
             }
+            
         case .denied, .restricted:
             withAnimation {
                 error = true
             }
         case .authorized, .limited:
             withAnimation {
-                showPickerView = true
+                viewModel.showPickerView = true
             }
         @unknown default:
             break
@@ -263,30 +273,22 @@ extension NewMemoryView {
     private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
-        let db = Firestore.firestore().collection(id)
+        let db = Firestore.firestore().collection("Self Memories").document(id).collection("Memories")
         
         var imageURLs = [String](repeating: "", count: images.count)
         
-        var cnt = 0
+        downloadCount = 0
         
         images.enumerated().forEach { i, image in
             if let image = image as? UIImage {
                 uploadImage(id, image: image) { url in
                     if let url = url {
                         imageURLs[i] = url
-                        cnt += 1
+                        downloadCount += 1
                         
-                        if cnt == images.count {
+                        if downloadCount == images.count {
                             if let memory = viewModel.detailMemory, viewModel.showDetail {
                                 db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
-                                
-                                DispatchQueue.main.async {
-                                    viewModel.detailMemory?.name = name
-                                    viewModel.detailMemory?.date = date
-                                    viewModel.detailMemory?.text = text
-                                    viewModel.detailMemory?.images = imageURLs.compactMap { URL(string: $0) }
-                                }
-                                
                             } else {
                                 db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
                             }
@@ -302,18 +304,11 @@ extension NewMemoryView {
             } else {
                 let url = image as? URL
                 imageURLs[i] = url!.absoluteString
-                cnt += 1
+                downloadCount += 1
                 
-                if cnt == images.count {
+                if downloadCount == images.count {
                     if let memory = viewModel.detailMemory, viewModel.showDetail {
                         db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
-                        
-                        DispatchQueue.main.async {
-                            viewModel.detailMemory?.name = name
-                            viewModel.detailMemory?.date = date
-                            viewModel.detailMemory?.text = text
-                            viewModel.detailMemory?.images = imageURLs.map { URL(string: $0)! }
-                        }
                         
                     } else {
                         db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])

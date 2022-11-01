@@ -14,10 +14,16 @@ import AVKit
 
 class MemoryViewModel: ObservableObject {
     
+    //self data
     @Published var memories = [Memory]()
+    @Published var userName = "";
     
-    //load data
-    @Published var loadStatus: LoadDataStatus = .start
+    //
+    @Published var globalMemories = [GlobalMemory]()
+    
+    //load data status
+    @Published var loadMyMemoriesStatus: LoadDataStatus = .start
+    @Published var loadGlobalMemoriesStatus: LoadDataStatus = .start
     @Published var loadMemoryByIDStatus: LoadDataStatus = .finish
     
     //detail memory
@@ -32,34 +38,47 @@ class MemoryViewModel: ObservableObject {
     @Published var showNewMemoryView = false
     @Published var showProVersionView = false
     @Published var showPhotoGalleryView = false
+    @Published var showProfileView = false
+    @Published var showPickerView = false
     
     @Published var imageDownloaded = false
     
     @Published var singleQuote: Quote?
     
-    func fetchAllMemories() {
+    @Published var memoryTabSelection = 0
+    
+    func fetchMyMemories() {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
-        self.loadStatus = .start
+        self.loadMyMemoriesStatus = .start
         
-        Firestore.firestore().collection(id).addSnapshotListener { snapshots, error in
-            if let documents = snapshots?.documents, error == nil {
-                self.memories = documents.map { snapshot -> Memory in
-                    let data = snapshot.data()
-                    let name = data["name"] as! String
-                    let date = (data["date"] as! Timestamp).dateValue()
-                    let text = data["text"] as! String
-                    let images = data["images"] as! [String]
-                    
-                    if let detailMemory = self.detailMemory, detailMemory.id == snapshot.documentID {
-                        //update detail view
-                        self.detailMemory = Memory(uuid: detailMemory.uuid, id: snapshot.documentID, name: name, date: date, text: text, images: images.map { URL(string: $0)! })
+        //listening self memories
+        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").addSnapshotListener { snapshots, error in
+            withAnimation {
+                if let documents = snapshots?.documents, error == nil {
+                    self.memories = documents.filter { $0.documentID != "User Data" }.map { snapshot -> Memory in
+                        let data = snapshot.data()
+                        let name = data["name"] as! String
+                        let date = (data["date"] as! Timestamp).dateValue()
+                        let text = data["text"] as! String
+                        let images = data["images"] as! [String]
+                        
+                        if let detailMemory = self.detailMemory, detailMemory.id == snapshot.documentID {
+                            //update detail view
+                            self.detailMemory = Memory(uuid: detailMemory.uuid, id: snapshot.documentID, name: name, date: date, text: text, images: images.map { URL(string: $0)! })
+                        }
+                        
+                        return Memory(id: snapshot.documentID, name: name, date: date, text: text, images: images.compactMap { URL(string: $0) })
                     }
                     
-                    return Memory(id: snapshot.documentID, name: name, date: date, text: text, images: images.map { URL(string: $0)! })
+                    self.loadMyMemoriesStatus = .finish
                 }
-                
-                self.loadStatus = .finish
+            }
+        }
+        
+        Firestore.firestore().collection("User Data").document(id).addSnapshotListener { snapshot, error in
+            if let data = snapshot?.data(), error == nil {
+                self.userName = data["name"] as! String
             }
         }
     }
@@ -73,7 +92,7 @@ class MemoryViewModel: ObservableObject {
         let id = sub1.before(first: "/")
         let documentID = sub1.after(first: "=")
         
-        Firestore.firestore().collection(id).document(documentID).getDocument { document, error in
+        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").document(documentID).getDocument { document, error in
             if let document = document, error == nil, let data = document.data(), let name = data["name"] as? String, let timestamp = data["date"] as? Timestamp, let images = data["images"] as? [String] {
                 
                 let date = timestamp.dateValue()
@@ -97,23 +116,5 @@ class MemoryViewModel: ObservableObject {
                 completion(false)
             }
         }
-    }
-}
-
-extension String {
-    func before(first delimiter: Character) -> String {
-        if let index = firstIndex(of: delimiter) {
-            let before = prefix(upTo: index)
-            return String(before)
-        }
-        return ""
-    }
-    
-    func after(first delimiter: Character) -> String {
-        if let index = firstIndex(of: delimiter) {
-            let after = suffix(from: index).dropFirst()
-            return String(after)
-        }
-        return ""
     }
 }
