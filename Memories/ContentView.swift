@@ -15,19 +15,6 @@ struct ContentView: View {
     
     var body: some View {
         if isLoggin {
-//            TabView(selection: $memoryViewModel.memoryTabSelection) {
-//                MyMemoriesView()
-//                    .tag(0)
-//
-//                GlobalMemoriesView()
-//                    .tag(1)
-//            }
-//            .tabViewStyle(.page(indexDisplayMode: .never))
-//            .edgesIgnoringSafeArea(.all)
-//            .onAppear {
-//                memoryViewModel.fetch()
-//            }
-            
             MyMemoriesView()
         } else {
             LoginView()
