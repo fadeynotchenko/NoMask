@@ -1,17 +1,9 @@
-//
-//  RandomWidget.swift
-//  RandomWidget
-//
-//  Created by Fadey Notchenko on 14.10.2022.
-//
-
 import WidgetKit
 import SwiftUI
 import Firebase
 import FirebaseFirestore
 import Kingfisher
 import FirebaseAuth
-import FirebaseStorage
 
 struct Provider: TimelineProvider {
     
@@ -44,15 +36,14 @@ struct Provider: TimelineProvider {
             return
         }
         
-        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").getDocuments { snapshots, error  in
-            if let document = snapshots?.documents.randomElement(), error == nil {
+        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").getDocuments { snap, _  in
+            if let document = snap?.documents.randomElement() {
                 let data = document.data()
                 
-                if let name = data["name"] as? String, let time = data["date"] as? Timestamp, let images = data["images"] as? [String], let randomImage = images.randomElement() {
+                if let name = data["name"] as? String, let time = data["date"] as? Timestamp, let images = data["images"] as? [String] {
                     
                     let date = time.dateValue()
-                    
-                    if let data = try? Data(contentsOf: URL(string: randomImage)!) {
+                    if let data = try? Data(contentsOf: URL(string: images.randomElement()!)!) {
                         completion(WidgetMemory(name: name, date: date, image: data))
                     }
                 }
@@ -79,7 +70,7 @@ struct RandomWidgetEntryView : View {
             
             let size = reader.size
             
-            if let memory = entry.memory{
+            if let memory = entry.memory {
                 Image(uiImage: UIImage(data: memory.image)!)
                     .resizable()
                     .scaledToFill()
@@ -100,8 +91,9 @@ struct RandomWidgetEntryView : View {
                     Color("Background").edgesIgnoringSafeArea(.all)
                     
                     VStack {
-                        Text("download")
+                        Text("memoriesempty")
                             .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
                     }
                 }
             }

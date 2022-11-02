@@ -94,9 +94,10 @@ struct MemoryDetailView: View {
         }
         .confirmationDialog("", isPresented: $reportDialog) {
             Button {
-                //
-                Firestore.firestore().collection("Reports").document().setData(["id": memory.id])
-                reportIsSent = true
+                if let userID = memory.userID {
+                    Firestore.firestore().collection("Reports").document().setData(["id": memory.id, "userID": userID])
+                    reportIsSent = true
+                }
             } label: {
                 Text("yesreport")
                     .accentColor(.red)

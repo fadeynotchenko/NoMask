@@ -16,6 +16,7 @@ struct ContentView: View {
     var body: some View {
         if isLoggin {
             MyMemoriesView()
+                
         } else {
             LoginView()
         }

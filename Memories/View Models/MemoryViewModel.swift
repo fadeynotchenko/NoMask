@@ -83,7 +83,7 @@ class MemoryViewModel: ObservableObject {
         }
     }
     
-    func fetchMemoryByLink(_ url: String, _ completion: @escaping (Memory?) -> Void) {
+    func fetchMemoryByLink(_ url: String, _ completion: @escaping (Memory?) -> ()) {
         withAnimation {
             self.loadMemoryByIDStatus = .start
         }
@@ -98,7 +98,7 @@ class MemoryViewModel: ObservableObject {
                 let date = timestamp.dateValue()
                 let text = data["text"] as? String
                 
-                completion(Memory(id: document.documentID, name: name, date: date, text: text ?? "", images: images.map { URL(string: $0)! }))
+                completion(Memory(id: document.documentID, name: name, date: date, text: text ?? "", userID: id, images: images.map { URL(string: $0)! }))
                 
             } else {
                 completion(nil)
@@ -106,7 +106,7 @@ class MemoryViewModel: ObservableObject {
         }
     }
     
-    func downloadImage(_ url: URL, _ completion: @escaping (Bool) -> Void) {
+    func saveImageToGallery(_ url: URL, _ completion: @escaping (Bool) -> ()) {
         Storage.storage().reference(forURL: url.absoluteString).getData(maxSize: 10 * 1024 * 1024) { data, err in
             if let data = data, let image = UIImage(data: data), err == nil {
                 UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
@@ -114,6 +114,22 @@ class MemoryViewModel: ObservableObject {
                 completion(true)
             } else {
                 completion(false)
+            }
+        }
+    }
+    
+    func fetch() {
+        let id = "cvENN1aPJ1dotPCKZf9DElBu4EK2"
+        Firestore.firestore().collection(id).getDocuments { snap, _ in
+            if let documents = snap?.documents {
+                for document in documents {
+                    let data = document.data()
+                    if let name = data["name"] as? String, let timestamp = data["date"] as? Timestamp, let images = data["images"] as? [String] {
+                        let text = data["text"] as? String
+                        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").document().setData(["name": name, "date": timestamp.dateValue(), "images": images, "text": text])
+                    }
+                    
+                }
             }
         }
     }

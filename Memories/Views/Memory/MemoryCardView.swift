@@ -23,7 +23,7 @@ struct MemoryCardView: View {
                     SingleImage(url)
                         .contextMenu {
                             Button {
-                                memoryViewModel.downloadImage(url) { ans in
+                                memoryViewModel.saveImageToGallery(url) { ans in
                                     if ans {
                                         memoryViewModel.imageDownloaded = true
                                     }

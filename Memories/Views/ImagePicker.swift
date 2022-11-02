@@ -53,7 +53,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             let manager = PHImageManager.default()
             
             fetchResult.enumerateObjects { obj, i, _ in
-                let size = CGSize(width: obj.pixelWidth, height: obj.pixelHeight)
+                let size = CGSize(width: 1200, height: 1200)
                 
                 let option = PHImageRequestOptions()
                 option.isSynchronous = true
