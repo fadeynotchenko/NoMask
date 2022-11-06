@@ -25,6 +25,18 @@ extension UIApplication: UIGestureRecognizerDelegate {
     }
 }
 
+extension AnyTransition {
+    static var right: AnyTransition {
+        AnyTransition.asymmetric(
+            insertion: .move(edge: .trailing),
+            removal: .move(edge: .leading))}
+    
+    static var left: AnyTransition {
+        AnyTransition.asymmetric(
+            insertion: .move(edge: .leading),
+            removal: .move(edge: .trailing))}
+}
+
 extension String {
     func before(first delimiter: Character) -> String {
         if let index = firstIndex(of: delimiter) {

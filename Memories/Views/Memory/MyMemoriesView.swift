@@ -19,7 +19,6 @@ struct MyMemoriesView: View {
     @State private var searchText = ""
     
     @EnvironmentObject private var memoryViewModel: MemoryViewModel
-    @EnvironmentObject private var storeViewModel: StoreViewModel
     
     @State private var linkMemoryError = false
     
@@ -50,12 +49,6 @@ struct MyMemoriesView: View {
                 
                 ScrollView {
                     LazyVStack(spacing: 20) {
-//                        quote
-//                            .frame(width: width - 20)
-//
-//                        searchView
-//                            .frame(width: width - 20)
-                        
                         ForEach(memories.sorted { $0.date > $1.date }, id: \.id) { memory in
                             Button {
                                 openDetailView(memory)
@@ -68,6 +61,12 @@ struct MyMemoriesView: View {
                     .offset(y: 70)
                     .padding(.bottom, 70)
                 }
+            }
+            .sheet(isPresented: $memoryViewModel.showNewMemoryView) {
+                NewMemoryView()
+            }
+            .sheet(isPresented: $memoryViewModel.showProfileView) {
+                ProfileView()
             }
             .overlay(alignment: .top) {
                 header
@@ -85,25 +84,13 @@ struct MyMemoriesView: View {
                         .shadow(radius: 3)
                 }
             }
-            
-            .sheet(isPresented: $memoryViewModel.showNewMemoryView) {
-                NewMemoryView()
-            }
-            .sheet(isPresented: $memoryViewModel.showProVersionView) {
-                ProVersionView()
-            }
-            .sheet(isPresented: $memoryViewModel.showProfileView) {
-                ProfileView()
-            }
             .onChange(of: memoryViewModel.shareURL) { url in
                 
                 if let url = url?.absoluteString {
                     
-                    memoryViewModel.showPickerView = false
-                    memoryViewModel.showNewMemoryView = false
-                    memoryViewModel.showProVersionView = false
-                    memoryViewModel.showPhotoGalleryView = false
                     memoryViewModel.showProfileView = false
+                    memoryViewModel.showNewMemoryView = false
+                    memoryViewModel.showPickerView = false
                     
                     if url.count == "https://mymemoriesapp.com/id=SobGhqJXcqajgNNrkSCdQFPsOFT2/memoryID=LEoPPtyeB9A0k2fDqiOp".count {
                         
@@ -131,89 +118,40 @@ struct MyMemoriesView: View {
             }
             .onAppear {
                 memoryViewModel.fetchMyMemories()
-                
-                if Constants.language == "ru" {
-                    memoryViewModel.singleQuote = Constants.ruQuotes.randomElement()
-                } else {
-                    memoryViewModel.singleQuote = Constants.engQuotes.randomElement()
-                }
             }
         }
-    }
-    
-    private var searchView: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            
-            TextField("search", text: $searchText)
-                .overlay(alignment: .trailing) {
-                    if !searchText.isEmpty {
-                        Button {
-                            withAnimation {
-                                searchText = ""
-                            }
-                        } label: {
-                            Image(systemName: "xmark")
-                                .frame(width: 20, height: 20)
-                                .foregroundColor(.red)
-                        }
-                    }
-                }
-        }
-        .padding(10)
-        .background(.ultraThickMaterial)
-        .cornerRadius(15)
-        .shadow(radius: 3)
     }
     
     private var header: some View {
-        Header(text: "mymemories") {
-            Menu {
-                Button {
-                    memoryViewModel.showProfileView = true
-                } label: {
-                    Label("profile", systemImage: "person")
-                }
-                
-                Button {
-                    if memories.count >= 3 && storeViewModel.isSubscription == false {
-                        memoryViewModel.showProVersionView = true
-                    } else {
-                        memoryViewModel.showNewMemoryView = true
-                    }
-                } label: {
-                    Label("new", systemImage: "plus")
-                }
-                
-                Button {
-                    memoryViewModel.showProVersionView = true
-                } label: {
-                    Label("Memories Pro", systemImage: "star")
-                }
-            } label: {
-                ImageButton(systemName: "ellipsis", color: .white) { }
+        VStack(spacing: 10) {
+            Title(text: "Memories")
+            
+            HStack(spacing: 10) {
+                Text("Мои Воспоминания")
+                    .foregroundColor(.gray)
+                    .bold()
+                    .font(.system(size: 14))
+//
+//                Text("Глобальные")
+//                    .foregroundColor(.gray)
+//                    .bold()
+//                    .font(.system(size: 14))
             }
         }
-    }
-    
-    @ViewBuilder
-    private var quote: some View {
-        if let modelQuote = memoryViewModel.singleQuote {
-            VStack(alignment: .leading, spacing: 15) {
-                Text(modelQuote.text)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.leading)
-                
-                Text(modelQuote.author)
-                    .bold()
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .overlay(alignment: .leading) {
+            ImageButton(systemName: "plus", color: .white) {
+                memoryViewModel.showNewMemoryView = true
             }
             .padding()
-            .background(.ultraThickMaterial)
-            .cornerRadius(15)
-            .shadow(radius: 3)
+            .padding(.top)
+        }
+        .overlay(alignment: .trailing) {
+            ImageButton(systemName: "person.fill", color: .white) {
+                memoryViewModel.showProfileView = true
+            }
+            .padding()
+            .padding(.top)
         }
     }
 }

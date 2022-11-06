@@ -17,8 +17,9 @@ class MemoryViewModel: ObservableObject {
     //self data
     @Published var memories = [Memory]()
     @Published var userName = "";
+    @Published var userIsBannded = false
     
-    //
+    //global
     @Published var globalMemories = [GlobalMemory]()
     
     //load data status
@@ -36,16 +37,10 @@ class MemoryViewModel: ObservableObject {
     
     //views
     @Published var showNewMemoryView = false
-    @Published var showProVersionView = false
-    @Published var showPhotoGalleryView = false
     @Published var showProfileView = false
     @Published var showPickerView = false
     
     @Published var imageDownloaded = false
-    
-    @Published var singleQuote: Quote?
-    
-    @Published var memoryTabSelection = 0
     
     func fetchMyMemories() {
         guard let id = Auth.auth().currentUser?.uid else { return }
@@ -78,7 +73,15 @@ class MemoryViewModel: ObservableObject {
         
         Firestore.firestore().collection("User Data").document(id).addSnapshotListener { snapshot, error in
             if let data = snapshot?.data(), error == nil {
-                self.userName = data["name"] as! String
+                if let name = data["name"] as? String {
+                    self.userName = name
+                }
+                
+                if let userIsBanned = data["banned"] as? Bool {
+                    self.userIsBannded = userIsBanned
+                } else {
+                    self.userIsBannded = false
+                }
             }
         }
     }

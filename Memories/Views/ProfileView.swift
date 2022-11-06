@@ -12,7 +12,6 @@ import FirebaseFirestore
 struct ProfileView: View {
     
     @EnvironmentObject private var memoryViewModel: MemoryViewModel
-    @EnvironmentObject private var storeViewModel: StoreViewModel
     
     var body: some View {
         NavigationView {
@@ -20,11 +19,6 @@ struct ProfileView: View {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 15) {
-                    Header(text: "profile") {
-                        ImageButton(systemName: "xmark", color: .white) {
-                            memoryViewModel.showProfileView = false
-                        }
-                    }
                     
                     NavigationLink {
                         EditName()
@@ -38,9 +32,16 @@ struct ProfileView: View {
                         .padding(.bottom)
                 }
             }
-            .navigationBarHidden(true)
+            .navigationTitle(Text("profile"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem {
+                    Button("close") {
+                        memoryViewModel.showProfileView = false
+                    }
+                }
+            }
         }
-        .accentColor(.white)
     }
     
     private var nameSection: some View {
@@ -50,9 +51,9 @@ struct ProfileView: View {
                     .foregroundColor(.gray)
                 
                 if memoryViewModel.userName.isEmpty {
-                    Title(text: "Unwknow User")
+                    Title(text: "Unwknow User", font: .title3)
                 } else {
-                    Title(text: "\(memoryViewModel.userName)")
+                    Title(text: "\(memoryViewModel.userName)", font: .title3)
                 }
             }
             
@@ -92,7 +93,7 @@ struct EditName: View {
     @EnvironmentObject private var memoryViewModel: MemoryViewModel
     
     @Environment(\.dismiss) private var dismiss
-
+    
     var body: some View {
         ZStack {
             Color("Background").edgesIgnoringSafeArea(.all)
@@ -113,6 +114,7 @@ struct EditName: View {
             .padding()
         }
         .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(Text("editprofile"))
         .onAppear {
             newName = memoryViewModel.userName
         }

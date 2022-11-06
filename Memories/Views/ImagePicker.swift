@@ -13,7 +13,6 @@ struct ImagePicker: UIViewControllerRepresentable {
     @Binding var videos: [URL]
     
     @EnvironmentObject private var memoryViewModel: MemoryViewModel
-    @EnvironmentObject private var storeViewModel: StoreViewModel
     
     func makeCoordinator() -> Coordinator {
         ImagePicker.Coordinator(parent1: self)
@@ -23,7 +22,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         let photoLibrary = PHPhotoLibrary.shared()
         var config = PHPickerConfiguration(photoLibrary: photoLibrary)
         
-        config.selectionLimit = (storeViewModel.isSubscription ? 0 : 20 - images.count)
+        config.selectionLimit = 20
         config.filter = .images
         
         let picker = PHPickerViewController(configuration: config)

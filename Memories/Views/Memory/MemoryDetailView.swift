@@ -105,9 +105,6 @@ struct MemoryDetailView: View {
         } message: {
             Text("report2")
         }
-        .sheet(isPresented: $memoryViewModel.showPhotoGalleryView) {
-            PhotoGalleryDetailView(width: size)
-        }
         .transition(.identity)
     }
     
@@ -165,18 +162,6 @@ struct MemoryDetailView: View {
                     .padding(.leading)
                 
                 Spacer()
-                
-                Button {
-                    memoryViewModel.showPhotoGalleryView = true
-                } label: {
-                    HStack(spacing: 5) {
-                        Text("all")
-
-                        Text("(\(memory.images.count))")
-                    }
-                    .foregroundColor(.blue)
-                }
-                .padding(.horizontal)
             }
             .frame(maxWidth: size)
             
@@ -185,9 +170,7 @@ struct MemoryDetailView: View {
                     LazyHStack(spacing: 15) {
                         ForEach(0..<memory.images.count, id: \.self) { i in
                             Button {
-                                withAnimation {
-                                    memoryViewModel.imageID = i
-                                }
+                                memoryViewModel.imageID = i
                             } label: {
                                 if let url = memory.images[i] {
                                     ImageItem(type: .url(url: url), size: 150)

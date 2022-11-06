@@ -14,14 +14,12 @@ struct MemoriesApp: App {
     
     @StateObject private var loginViewModel = LoginViewModel()
     @StateObject private var memoryViewModel = MemoryViewModel()
-    @StateObject private var storeViewModel = StoreViewModel()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(loginViewModel)
                 .environmentObject(memoryViewModel)
-                .environmentObject(storeViewModel)
                 .environment(\.colorScheme, .dark)
                 .preferredColorScheme(.dark)
                 .onAppear(perform: UIApplication.shared.addTapGestureRecognizer)

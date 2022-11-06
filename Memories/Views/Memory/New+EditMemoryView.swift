@@ -31,142 +31,116 @@ struct NewMemoryView: View {
     
     @State private var downloadCount = 0
     
-    @EnvironmentObject private var viewModel: MemoryViewModel
-    @EnvironmentObject private var storeViewModel: StoreViewModel
+    @EnvironmentObject private var memoryViewModel: MemoryViewModel
     
     var body: some View {
-        GeometryReader { reader in
-            let width = reader.size.width
-            
-            ZStack {
-                Color("Background").edgesIgnoringSafeArea(.all)
+        NavigationView {
+            GeometryReader { reader in
+                let width = reader.size.width
                 
-                VStack {
-                    Header(text: viewModel.showDetail ? "edit" : "new") {
-                        ImageButton(systemName: "xmark", color: .white) {
-                            withAnimation {
-                                viewModel.showNewMemoryView = false
-                            }
+                ZStack {
+                    Color("Background").edgesIgnoringSafeArea(.all)
+                    
+                    VStack(spacing: 10) {
+                        NavigationLink {
+                            InformationView(width)
+                        } label: {
+                            informatonSection
+                        }
+                        
+                        photoSection(width)
+                        
+                        Spacer()
+                    }
+                }
+                .navigationTitle(Text(memoryViewModel.showDetail ? "edit" : "new"))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem {
+                        Button("close") {
+                            memoryViewModel.showNewMemoryView = false
                         }
                     }
-                    
-                    TabView(selection: $selection) {
-                        InformationView(width)
-                            .tag(0)
-                        
-                        MediaView(width)
-                            .tag(1)
-                    }
-                    .ignoresSafeArea(.keyboard)
-                    .tabViewStyle(.page(indexDisplayMode: .always))
                 }
-                .ignoresSafeArea(.keyboard)
-            }
-            .sheet(isPresented: $viewModel.showPickerView) {
-                ImagePicker(images: $images, videos: $videos)
-                    .edgesIgnoringSafeArea(.bottom)
-            }
-            .sheet(isPresented: $viewModel.showProVersionView) {
-                ProVersionView()
-            }
-            .overlay {
-                if download {
-                    VStack(spacing: 5) {
-                        ProgressView()
-                        
-                        Text("\(downloadCount) / \(images.count)")
-                            .foregroundColor(.gray)
-                            .bold()
-                            .font(.system(size: 12))
-                    }
-                    .padding()
-                    .background(.ultraThickMaterial)
-                    .cornerRadius(15)
-                    .shadow(radius: 3)
+                .sheet(isPresented: $memoryViewModel.showPickerView) {
+                    ImagePicker(images: $images, videos: $videos)
+                        .edgesIgnoringSafeArea(.bottom)
                 }
-            }
-            .toast(isPresenting: $error) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка" : "Error", subTitle: Constants.language == "ru" ? "Требуется доступ к галерее" : "Gallery access required")
-            }
-            .toast(isPresenting: $downloadError) {
-                AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка загрузки" : "Loading error")
-            }
-            .onAppear {
-                if let memory = viewModel.detailMemory, viewModel.showDetail {
-                    name = memory.name
-                    date = memory.date
-                    text = memory.text
-                    
-                    images = memory.images
+                .overlay {
+                    if download {
+                        VStack(spacing: 5) {
+                            ProgressView()
+                            
+                            Text("\(downloadCount) / \(images.count)")
+                                .foregroundColor(.gray)
+                                .bold()
+                                .font(.system(size: 12))
+                        }
+                        .padding()
+                        .background(.ultraThickMaterial)
+                        .cornerRadius(15)
+                        .shadow(radius: 3)
+                    }
+                }
+                .toast(isPresenting: $error) {
+                    AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка" : "Error", subTitle: Constants.language == "ru" ? "Требуется доступ к галерее" : "Gallery access required")
+                }
+                .toast(isPresenting: $downloadError) {
+                    AlertToast(displayMode: .banner(.pop), type: .error(.red), title: Constants.language == "ru" ? "Ошибка загрузки" : "Loading error")
+                }
+                .onAppear {
+                    if let memory = memoryViewModel.detailMemory, memoryViewModel.showDetail {
+                        name = memory.name
+                        date = memory.date
+                        text = memory.text
+                        
+                        images = memory.images
+                    }
                 }
             }
         }
     }
     
-    private func InformationView(_ width: CGFloat) -> some View {
-        VStack(spacing: 15) {
-            Title(text: "name")
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            TextField("name2", text: $name)
-                .foregroundColor(.gray)
-                .padding()
-                .background(.ultraThickMaterial)
-                .cornerRadius(15)
-            
-            Title(text: "desc")
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            if #available(iOS 16, *) {
-                TextField("optional", text: $text, axis: .vertical)
+    private var informatonSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Основная информация")
                     .foregroundColor(.gray)
-                    .padding()
-                    .background(.ultraThickMaterial)
-                    .cornerRadius(15)
-                    .lineLimit(3...5)
-            } else {
-                TextField("optional", text: $text)
+                
+                if name.isEmpty {
+                    Title(text: "Название воспоминания", font: .title3)
+                } else {
+                    Title(text: "\(name)", font: .title3)
+                }
+                
+                Text(date, format: .dateTime.year().month().day())
                     .foregroundColor(.gray)
-                    .padding()
-                    .background(.ultraThickMaterial)
-                    .cornerRadius(15)
-            }
-            
-            DatePicker(selection: $date, displayedComponents: .date) {
-                Title(text: "date")
+                    .bold()
             }
             
             Spacer()
             
-            TextButton(text: "next", size: width - 50, color: name.isEmpty ? .gray : .white) {
-                withAnimation {
-                    selection = 1
-                }
-            }
-            .padding(.bottom, 25)
-            .disabled(name.isEmpty)
+            Image(systemName: "chevron.right")
+                .frame(width: 15, height: 15)
+                .foregroundColor(.gray)
+                .shadow(radius: 3)
         }
+        .padding()
+        .background(.ultraThickMaterial)
+        .cornerRadius(15)
         .shadow(radius: 3)
         .padding()
-        
     }
     
-    @ViewBuilder
-    private func MediaView(_ width: CGFloat) -> some View {
+    private func photoSection(_ width: CGFloat) -> some View {
         VStack(spacing: 15) {
-            Title(text: "photo")
+            Title(text: "photo", font: .title3)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVGrid(columns: [GridItem(), GridItem()], spacing: 15) {
-                    if storeViewModel.isSubscription {
-                        AddMediaButton(width: width / 2.3) {
-                            openImagePicker()
-                        }
-                    } else if images.count < 20 {
-                        AddMediaButton(width: width / 2.3) {
-                            openImagePicker()
-                        }
+                    AddMediaButton(width: width / 2.3) {
+                        openImagePicker()
                     }
                     
                     ForEach(0..<images.count, id: \.self) { i in
@@ -193,20 +167,7 @@ struct NewMemoryView: View {
                 }
             }
             
-            if storeViewModel.isSubscription == false {
-                VStack(spacing: 5) {
-                    Text("limit")
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-
-                    Button("pro") {
-                        viewModel.showProVersionView = true
-                    }
-                    .foregroundColor(.blue)
-                }
-            }
-            
-            TextButton(text: viewModel.showDetail ? "save" : "add", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
+            TextButton(text: memoryViewModel.showDetail ? "save" : "add", size: width - 50, color: name.isEmpty || images.isEmpty ? .gray : .white) {
                 withAnimation {
                     download = true
                     
@@ -216,7 +177,7 @@ struct NewMemoryView: View {
                         }
                         
                         if ans {
-                            viewModel.showNewMemoryView = false
+                            memoryViewModel.showNewMemoryView = false
                             
                             WidgetCenter.shared.reloadAllTimelines()
                         } else {
@@ -226,11 +187,57 @@ struct NewMemoryView: View {
                 }
             }
             .disabled(name.isEmpty || images.isEmpty)
-            .padding(.bottom, 25)
         }
         .padding()
         .shadow(radius: 3)
     }
+    
+    private func InformationView(_ width: CGFloat) -> some View {
+        VStack(spacing: 15) {
+            VStack(spacing: 10) {
+                Title(text: "name", font: .title3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                TextField("name2", text: $name)
+                    .foregroundColor(.gray)
+                    .padding()
+                    .background(.ultraThickMaterial)
+                    .cornerRadius(15)
+            }
+            
+            VStack(spacing: 10) {
+                Title(text: "desc", font: .title3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                if #available(iOS 16, *) {
+                    TextField("optional", text: $text, axis: .vertical)
+                        .foregroundColor(.gray)
+                        .padding()
+                        .background(.ultraThickMaterial)
+                        .cornerRadius(15)
+                        .lineLimit(3...5)
+                } else {
+                    TextField("optional", text: $text)
+                        .foregroundColor(.gray)
+                        .padding()
+                        .background(.ultraThickMaterial)
+                        .cornerRadius(15)
+                }
+            }
+            
+            DatePicker(selection: $date, displayedComponents: .date) {
+                Title(text: "date", font: .title3)
+            }
+            
+            Spacer()
+        }
+        .navigationTitle(Text("Основная информация"))
+        .navigationBarTitleDisplayMode(.inline)
+        .shadow(radius: 3)
+        .padding()
+        
+    }
+    
 }
 
 extension NewMemoryView {
@@ -244,7 +251,7 @@ extension NewMemoryView {
                 switch status {
                 case .authorized, .limited:
                     withAnimation {
-                        viewModel.showPickerView = true
+                        memoryViewModel.showPickerView = true
                     }
                 case .denied, .restricted:
                     withAnimation {
@@ -263,7 +270,7 @@ extension NewMemoryView {
             }
         case .authorized, .limited:
             withAnimation {
-                viewModel.showPickerView = true
+                memoryViewModel.showPickerView = true
             }
         @unknown default:
             break
@@ -287,7 +294,7 @@ extension NewMemoryView {
                         downloadCount += 1
                         
                         if downloadCount == images.count {
-                            if let memory = viewModel.detailMemory, viewModel.showDetail {
+                            if let memory = memoryViewModel.detailMemory, memoryViewModel.showDetail {
                                 db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
                             } else {
                                 db.document().setData(["name": name, "date": date, "text": text, "images": imageURLs])
@@ -307,7 +314,7 @@ extension NewMemoryView {
                 downloadCount += 1
                 
                 if downloadCount == images.count {
-                    if let memory = viewModel.detailMemory, viewModel.showDetail {
+                    if let memory = memoryViewModel.detailMemory, memoryViewModel.showDetail {
                         db.document(memory.id).setData(["name": name, "date": date, "text": text, "images": imageURLs])
                         
                     } else {
