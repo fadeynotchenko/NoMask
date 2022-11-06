@@ -15,7 +15,7 @@ struct ContentView: View {
     
     var body: some View {
         if isLoggin {
-            MyMemoriesView()
+            MemoriesView()
         } else if memoryViewModel.userIsBannded {
             BannedView()
         } else {

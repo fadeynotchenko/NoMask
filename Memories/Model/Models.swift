@@ -9,14 +9,12 @@ import Foundation
 import SwiftUI
 
 struct Memory: Identifiable {
-    var uuid = UUID()
-    var id: String
-    var name: String
+    var id = UUID()
+    var userID: String
+    var userName: String
+    var userImage: URL?
     var date: Date
-    var text: String
-    var userID: String?
-    
-    var images = [URL?]()
+    var images: [URL]
 }
 
 struct GlobalMemory: Identifiable {

@@ -12,52 +12,78 @@ struct MemoryCardView: View {
     
     let memory: Memory
     let size: CGFloat
-    let animatiom: Namespace.ID
+    
+    @State private var selection = 0
     
     @EnvironmentObject private var memoryViewModel: MemoryViewModel
     
     var body: some View {
-        TabView(selection: memoryViewModel.detailMemory?.uuid == memory.uuid ? $memoryViewModel.imageID : nil) {
-            ForEach(0..<memory.images.count, id: \.self) { i in
-                if let url = memory.images[i] {
-                    SingleImage(url)
-                        .contextMenu {
-                            Button {
-                                memoryViewModel.saveImageToGallery(url) { ans in
-                                    if ans {
-                                        memoryViewModel.imageDownloaded = true
+        VStack(spacing: 0) {
+            TabView(selection: $selection) {
+                ForEach(0..<memory.images.count, id: \.self) { i in
+                    if let url = memory.images[i] {
+                        VStack(spacing: 0) {
+                            ImageItem(url: url, size: size - 20)
+                                .contextMenu {
+                                    Button {
+                                        memoryViewModel.saveImageToGallery(url) { ans in
+                                            if ans {
+                                                memoryViewModel.imageDownloaded = true
+                                            }
+                                        }
+                                    } label: {
+                                        Label("saveimages", systemImage: "square.and.arrow.down")
                                     }
                                 }
-                            } label: {
-                                Label("saveimages", systemImage: "square.and.arrow.down")
-                            }
                         }
+                        .background(.ultraThickMaterial)
+                    }
                 }
             }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .frame(width: size, height: size)
-        .disabled(!memoryViewModel.showDetail)
-        .matchedGeometryEffect(id: memory.uuid, in: animatiom)
-        .shadow(radius: 3)
-    }
-    
-    private func SingleImage(_ url: URL) -> some View {
-        ImageItem(type: .url(url: url), size: size - 20)
-            .overlay(alignment: .bottomTrailing) {
-                VStack(alignment: .trailing) {
-                    Text(memory.name)
-                        .bold()
-                        .font(.system(size: size / 15))
-                        .foregroundColor(.white)
+            .tabViewStyle(.page(indexDisplayMode: memory.images.count == 1 ? .never : .always))
+            .frame(width: size - 20, height: size - 20)
+            .overlay(alignment: .topTrailing) {
+//                Menu {
+//
+//                } label: {
+//                    ImageButton(systemName: "ellipsis", color: .white) { }
+//                }
+//                .padding()
+            }
+            
+            HStack(spacing: 0) {
+                if let url = memory.userImage {
                     
-                    Text(memory.date, format: .dateTime.year().month().day())
-                        .bold()
-                        .font(.system(size: size / 20))
+                } else {
+                    Image(systemName: "person.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .scaleEffect(0.7)
+                        .frame(width: 40, height: 40)
                         .foregroundColor(.white)
+                        .background(Color("Background"))
+                        .clipShape(Circle())
+                        .padding(.leading)
                 }
-                .padding(size / 30)
-                .shadow(radius: 3)
+                
+                VStack(alignment: .leading, spacing: 5) {
+                    Title(text: "\(memory.userName)", font: .system(size: 15))
+                    
+                    Text(memory.date.timeAgoDisplay())
+                        .bold()
+                        .font(.system(size: 13))
+                        .foregroundColor(.gray)
+                }
+                .padding()
+                
+                Spacer()
             }
+            .frame(maxWidth: size - 20)
+            .background(.ultraThickMaterial)
+            .cornerRadius(15, corners: [.bottomLeft, .bottomRight])
+        }
+        .background(.ultraThickMaterial)
+        .cornerRadius(15)
+        .shadow(radius: 3)
     }
 }

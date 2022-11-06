@@ -25,16 +25,18 @@ extension UIApplication: UIGestureRecognizerDelegate {
     }
 }
 
-extension AnyTransition {
-    static var right: AnyTransition {
-        AnyTransition.asymmetric(
-            insertion: .move(edge: .trailing),
-            removal: .move(edge: .leading))}
-    
-    static var left: AnyTransition {
-        AnyTransition.asymmetric(
-            insertion: .move(edge: .leading),
-            removal: .move(edge: .trailing))}
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape( RoundedCorner(radius: radius, corners: corners) )
+    }
+}
+
+extension Date {
+    func timeAgoDisplay() -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: self, relativeTo: Date())
+    }
 }
 
 extension String {

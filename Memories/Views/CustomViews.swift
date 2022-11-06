@@ -88,63 +88,35 @@ struct AddMediaButton: View {
 }
 
 struct ImageItem: View {
-    let type: ImageItemType
+    let url: URL
     let size: CGFloat
     
     var body: some View {
-        switch type {
-            
-        case .image(let image):
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: size, height: size)
-                .cornerRadius(15)
-                .clipped()
-                .shadow(radius: 3)
-            
-        case .url(let url):
-            KFImage(url)
-                .loadDiskFileSynchronously()
-                .resizable()
-                .placeholder {
-                    ProgressView()
-                        .font(.system(size: 24))
-                        .frame(width: size, height: size)
-                        .background(.ultraThickMaterial)
-                        .cornerRadius(15)
-                        .shadow(radius: 3)
-                }
-                .scaledToFill()
-                .frame(width: size, height: size)
-                .cornerRadius(15)
-                .shadow(radius: 3)
-                .clipped()
-                .transition(.identity)
-        }
+        KFImage(url)
+            .loadDiskFileSynchronously()
+            .resizable()
+            .placeholder {
+                ProgressView()
+                    .font(.system(size: 24))
+                    .frame(width: size, height: size)
+                    .background(.ultraThickMaterial)
+                    .shadow(radius: 3)
+            }
+            .scaledToFill()
+            .frame(width: size, height: size)
+            .shadow(radius: 3)
+            .clipped()
+            .transition(.identity)
     }
 }
 
-struct Header<Content: View>: View {
-    
-    let text: LocalizedStringKey
-    let menu: Content
-    
-    init(text: LocalizedStringKey, @ViewBuilder menu: @escaping () -> Content) {
-        self.text = text
-        self.menu = menu()
-    }
-    
-    var body: some View {
-        VStack {
-            HStack {
-                Title(text: text)
-                
-                Spacer()
-                
-                menu
-            }
-        }
-        .padding()
+struct RoundedCorner: Shape {
+
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
     }
 }

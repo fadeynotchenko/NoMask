@@ -19,26 +19,18 @@ class MemoryViewModel: ObservableObject {
     @Published var userName = "";
     @Published var userIsBannded = false
     
-    //global
-    @Published var globalMemories = [GlobalMemory]()
-    
     //load data status
     @Published var loadMyMemoriesStatus: LoadDataStatus = .start
     @Published var loadGlobalMemoriesStatus: LoadDataStatus = .start
     @Published var loadMemoryByIDStatus: LoadDataStatus = .finish
     
     //detail memory
-    @Published var detailMemory: Memory?
-    @Published var showDetail = false
-    @Published var animation = false
-    @Published var imageID = 0
     
     @Published var shareURL: URL?
     
     //views
     @Published var showNewMemoryView = false
     @Published var showProfileView = false
-    @Published var showPickerView = false
     
     @Published var imageDownloaded = false
     
@@ -46,28 +38,24 @@ class MemoryViewModel: ObservableObject {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
         self.loadMyMemoriesStatus = .start
+        self.memories.removeAll()
         
         //listening self memories
-        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").addSnapshotListener { snapshots, error in
-            withAnimation {
-                if let documents = snapshots?.documents, error == nil {
-                    self.memories = documents.filter { $0.documentID != "User Data" }.map { snapshot -> Memory in
-                        let data = snapshot.data()
-                        let name = data["name"] as! String
-                        let date = (data["date"] as! Timestamp).dateValue()
-                        let text = data["text"] as! String
-                        let images = data["images"] as! [String]
-                        
-                        if let detailMemory = self.detailMemory, detailMemory.id == snapshot.documentID {
-                            //update detail view
-                            self.detailMemory = Memory(uuid: detailMemory.uuid, id: snapshot.documentID, name: name, date: date, text: text, images: images.map { URL(string: $0)! })
-                        }
-                        
-                        return Memory(id: snapshot.documentID, name: name, date: date, text: text, images: images.compactMap { URL(string: $0) })
-                    }
+        Firestore.firestore().collection("Global Memories").getDocuments { snapshots, error in
+            if let documents = snapshots?.documents, error == nil {
+                self.memories = documents.map { snapshot -> Memory in
+                    let data = snapshot.data()
                     
-                    self.loadMyMemoriesStatus = .finish
+                    let date = (data["date"] as! Timestamp).dateValue()
+                    let images = (data["images"] as! [String]).map { URL(string: $0)! }
+                    let userName = data["userName"] as! String
+                    let userID = data["userID"] as! String
+                    let userImage = URL(string: (data["userImage"] as? String ?? ""))
+                    
+                    return Memory(userID: userID, userName: userName, userImage: userImage, date: date, images: images)
                 }
+                
+                self.loadMyMemoriesStatus = .finish
             }
         }
         
@@ -86,28 +74,28 @@ class MemoryViewModel: ObservableObject {
         }
     }
     
-    func fetchMemoryByLink(_ url: String, _ completion: @escaping (Memory?) -> ()) {
-        withAnimation {
-            self.loadMemoryByIDStatus = .start
-        }
-        
-        let sub1 = url.after(first: "=")
-        let id = sub1.before(first: "/")
-        let documentID = sub1.after(first: "=")
-        
-        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").document(documentID).getDocument { document, error in
-            if let document = document, error == nil, let data = document.data(), let name = data["name"] as? String, let timestamp = data["date"] as? Timestamp, let images = data["images"] as? [String] {
-                
-                let date = timestamp.dateValue()
-                let text = data["text"] as? String
-                
-                completion(Memory(id: document.documentID, name: name, date: date, text: text ?? "", userID: id, images: images.map { URL(string: $0)! }))
-                
-            } else {
-                completion(nil)
-            }
-        }
-    }
+//    func fetchMemoryByLink(_ url: String, _ completion: @escaping (Memory?) -> ()) {
+//        withAnimation {
+//            self.loadMemoryByIDStatus = .start
+//        }
+//        
+//        let sub1 = url.after(first: "=")
+//        let id = sub1.before(first: "/")
+//        let documentID = sub1.after(first: "=")
+//        
+//        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").document(documentID).getDocument { document, error in
+//            if let document = document, error == nil, let data = document.data(), let name = data["name"] as? String, let timestamp = data["date"] as? Timestamp, let images = data["images"] as? [String] {
+//                
+//                let date = timestamp.dateValue()
+//                let text = data["text"] as? String
+//                
+//                completion(Memory(id: document.documentID, name: name, date: date, text: text ?? "", userID: id, images: images.map { URL(string: $0)! }))
+//                
+//            } else {
+//                completion(nil)
+//            }
+//        }
+//    }
     
     func saveImageToGallery(_ url: URL, _ completion: @escaping (Bool) -> ()) {
         Storage.storage().reference(forURL: url.absoluteString).getData(maxSize: 10 * 1024 * 1024) { data, err in
@@ -121,19 +109,19 @@ class MemoryViewModel: ObservableObject {
         }
     }
     
-    func fetch() {
-        let id = "cvENN1aPJ1dotPCKZf9DElBu4EK2"
-        Firestore.firestore().collection(id).getDocuments { snap, _ in
-            if let documents = snap?.documents {
-                for document in documents {
-                    let data = document.data()
-                    if let name = data["name"] as? String, let timestamp = data["date"] as? Timestamp, let images = data["images"] as? [String] {
-                        let text = data["text"] as? String
-                        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").document().setData(["name": name, "date": timestamp.dateValue(), "images": images, "text": text])
-                    }
-                    
-                }
-            }
-        }
-    }
+//    func fetch() {
+//        let id = "cvENN1aPJ1dotPCKZf9DElBu4EK2"
+//        Firestore.firestore().collection(id).getDocuments { snap, _ in
+//            if let documents = snap?.documents {
+//                for document in documents {
+//                    let data = document.data()
+//                    if let name = data["name"] as? String, let timestamp = data["date"] as? Timestamp, let images = data["images"] as? [String] {
+//                        let text = data["text"] as? String
+//                        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").document().setData(["name": name, "date": timestamp.dateValue(), "images": images, "text": text])
+//                    }
+//
+//                }
+//            }
+//        }
+//    }
 }
