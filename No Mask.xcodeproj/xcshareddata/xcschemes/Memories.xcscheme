@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "43332E1528EB3D2B006E017B"
-               BuildableName = "Memories.app"
-               BlueprintName = "Memories"
-               ReferencedContainer = "container:Memories.xcodeproj">
+               BuildableName = "No Mask.app"
+               BlueprintName = "No Mask"
+               ReferencedContainer = "container:No Mask.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "43332E1528EB3D2B006E017B"
-            BuildableName = "Memories.app"
-            BlueprintName = "Memories"
-            ReferencedContainer = "container:Memories.xcodeproj">
+            BuildableName = "No Mask.app"
+            BlueprintName = "No Mask"
+            ReferencedContainer = "container:No Mask.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "43332E1528EB3D2B006E017B"
-            BuildableName = "Memories.app"
-            BlueprintName = "Memories"
-            ReferencedContainer = "container:Memories.xcodeproj">
+            BuildableName = "No Mask.app"
+            BlueprintName = "No Mask"
+            ReferencedContainer = "container:No Mask.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

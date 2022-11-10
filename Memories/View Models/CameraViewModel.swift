@@ -32,18 +32,24 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
     
     @Published var recordPermission: AVAudioSession.RecordPermission = .undetermined
     
+    @Published var permission = false
+    
     func checkPermission() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
+            self.permission = true
             setUp()
             return
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { status in
                 if status {
+                    self.permission = true
+                    
                     self.setUp()
                 }
             }
         case .denied:
+            self.permission = false
             alert.toggle()
             return
         default:

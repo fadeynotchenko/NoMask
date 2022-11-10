@@ -119,49 +119,65 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "08A7C2CB-2EC4-4AF1-8E39-C6D58C9B0795"
+            uuid = "8CA018D3-4139-4A68-8C15-043D6E1AD868"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Memories/Constans/Constant.swift"
+            filePath = "Memories/Views/Memory/NewMemoryView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "13"
-            endingLineNumber = "13"
-            landmarkName = "Constants"
-            landmarkType = "3">
+            startingLineNumber = "260"
+            endingLineNumber = "260"
+            landmarkName = "uploadToFirebase(_:)"
+            landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "08A7C2CB-2EC4-4AF1-8E39-C6D58C9B0795 - 3921b13a4c9959bf"
+                  uuid = "8CA018D3-4139-4A68-8C15-043D6E1AD868 - 41c99a42d3af55d8"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "one-time initialization function for engQuotes"
-                  moduleName = "Memories"
+                  symbolName = "NoMask.NewMemoryView.uploadToFirebase((Swift.Bool) -&gt; ()) -&gt; ()"
+                  moduleName = "NoMask"
                   usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/fadeynotchenko/Desktop/Memories/Memories/Constans/Constant.swift"
+                  urlString = "file:///Users/fadeynotchenko/Documents/Memories-AppStore-/Memories/Views/Memory/NewMemoryView.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "13"
-                  endingLineNumber = "13"
-                  offsetFromSymbolStart = "40">
+                  startingLineNumber = "191"
+                  endingLineNumber = "191"
+                  offsetFromSymbolStart = "1048">
                </Location>
                <Location
-                  uuid = "08A7C2CB-2EC4-4AF1-8E39-C6D58C9B0795 - 23656932cfbb2091"
+                  uuid = "8CA018D3-4139-4A68-8C15-043D6E1AD868 - 6f234c3b4fdb4501"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "Memories.Constants.engQuotes.unsafeMutableAddressor : Swift.Array&lt;Memories.Quote&gt;"
-                  moduleName = "Memories"
+                  symbolName = "closure #1 (Swift.Int, __C.UIImage) -&gt; () in NoMask.NewMemoryView.uploadToFirebase((Swift.Bool) -&gt; ()) -&gt; ()"
+                  moduleName = "NoMask"
                   usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/fadeynotchenko/Desktop/Memories/Memories/Constans/Constant.swift"
+                  urlString = "file:///Users/fadeynotchenko/Documents/Memories-AppStore-/Memories/Views/Memory/NewMemoryView.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "13"
-                  endingLineNumber = "13"
-                  offsetFromSymbolStart = "16">
+                  startingLineNumber = "187"
+                  endingLineNumber = "187"
+                  offsetFromSymbolStart = "128">
                </Location>
             </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "75311FFA-78E2-428B-9565-424D5199EE06"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Memories/View Models/MemoryViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "43"
+            endingLineNumber = "43"
+            landmarkName = "fetchGlobalMemories()"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

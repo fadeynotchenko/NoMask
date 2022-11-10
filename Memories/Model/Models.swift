@@ -10,25 +10,13 @@ import SwiftUI
 
 struct Memory: Identifiable {
     var id = UUID()
+    var memoryID: String
     var userID: String
-    var userName: String
+    var userNickname: String?
     var userImage: URL?
+    var descText: String?
     var date: Date
     var images: [URL]
-}
-
-struct GlobalMemory: Identifiable {
-    var uuid = UUID()
-    var id: String
-    var name: String
-    var date: Date
-    var text: String
-    
-    var images = [URL]()
-    
-    var userName: String
-    var likes: [String]
-    var createdDate: Date
 }
 
 enum LoadDataStatus: Hashable {
@@ -37,18 +25,8 @@ enum LoadDataStatus: Hashable {
     case empty
 }
 
-enum ImageItemType {
-    case image(image: UIImage)
-    case url(url: URL)
-}
-
-struct WidgetMemory {
-    var name: String
-    var date: Date
-    var image: Data
-}
-
-struct Quote {
-    var text: String
-    var author: String
+enum AvatarImageType {
+    case url(_ url: URL)
+    case image(_ uiimage: UIImage)
+    case empty
 }

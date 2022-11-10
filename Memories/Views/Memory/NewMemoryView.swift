@@ -13,6 +13,8 @@ import FirebaseFirestore
 
 struct NewMemoryView: View {
     
+    @Binding var dismiss: Bool
+    
     @EnvironmentObject private var memoryViewModel: MemoryViewModel
     @StateObject private var cameraViewModel = CameraViewModel()
     
@@ -21,75 +23,106 @@ struct NewMemoryView: View {
     @State private var disabled = false
     @State private var download = false
     
-    @State private var uploadedCount = 0
+    @State private var selection = 0
+    
+    @State private var firstImage: UIImage?
+    @State private var secondImage: UIImage?
+    
+    @State private var text = ""
     
     var body: some View {
         NavigationView {
-            GeometryReader { reader in
-                let width = reader.size.width
+            
+            ZStack {
+                Color("Background").edgesIgnoringSafeArea(.all)
                 
-                ZStack {
-                    Color("Background").edgesIgnoringSafeArea(.all)
+                VStack(spacing: 10) {
+                    header
                     
-                    VStack {
-                        CameraPreview(camera: cameraViewModel, width: width - 20)
-                            .frame(width: width - 20, height: width - 20)
+                    if selection == 2 {
+                        addDesc
+                    } else {
+                        CameraPreview(camera: cameraViewModel)
+                            .frame(width: Constants.width, height: Constants.height)
                             .cornerRadius(15)
                             .shadow(radius: 3)
+                            .overlay {
+                                if let image = firstImage, selection == 0 {
+                                    picture(image)
+                                } else if let image = secondImage, selection == 1 {
+                                    picture(image)
+                                }
+                            }
                         
-                        takePhotoAndRotationButtons
-                        
-                        imagesLazyHStack
-                        
-                        Spacer()
-                        
+                        takePhotoButton
+                    }
+                    
+                    Spacer()
+                    
+                    if selection == 0 {
+                        firstNextButton
+                    } else if selection == 1 {
+                        secondNextButton
+                    } else {
                         uploadButton
                     }
                 }
-                .navigationTitle(Text("Новое воспоминание"))
-                .navigationBarTitleDisplayMode(.inline)
-                .onAppear {
-                    cameraViewModel.checkPermission()
+                .ignoresSafeArea(.keyboard, edges: .all)
+            }
+            .navigationTitle(Text("new"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem {
+                    Button {
+                        dismiss.toggle()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundColor(.white)
+                    }
                 }
-                .onChange(of: cameraViewModel.previewURL) { url in
-                    DispatchQueue.main.async {
-                        if let url = url, let image = UIImage(contentsOfFile: url.path) {
-                            withAnimation {
-                                images.append(image)
+            }
+            .onAppear {
+                cameraViewModel.checkPermission()
+            }
+            .onChange(of: cameraViewModel.previewURL) { url in
+                DispatchQueue.main.async {
+                    if let url = url, let image = UIImage(contentsOfFile: url.path) {
+                        withAnimation {
+                            if selection == 0 {
+                                firstImage = image
+                            } else {
+                                secondImage = image
                             }
-                        }
-                        
-                        cameraViewModel.retakePic()
-                    }
-                }
-                .overlay {
-                    if download {
-                        VStack(spacing: 10) {
-                            ProgressView()
                             
-                            Text("\(uploadedCount) / \(images.count)")
-                                .bold()
-                                .font(.system(size: 13))
-                                .foregroundColor(.gray)
+                            disabled = true
                         }
-                        .padding()
-                        .background(.ultraThickMaterial)
-                        .cornerRadius(15)
                     }
+                    
+                    cameraViewModel.retakePic()
+                }
+            }
+            .overlay {
+                if cameraViewModel.permission == false {
+                    Permission(text: "camerapermission")
+                }
+                
+                if download {
+                    Download()
                 }
             }
         }
     }
     
-    private var takePhotoAndRotationButtons: some View {
+    @ViewBuilder
+    private var header: some View {
+        if selection != 2 {
+            Title(text: selection == 0 ? "camera1" : "camera2", font: .subheadline)
+        }
+    }
+    
+    private var takePhotoButton: some View {
         Button {
             cameraViewModel.takePic()
-            
-            disabled = true
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                disabled = false
-            }
         } label: {
             ZStack {
                 Circle()
@@ -104,63 +137,99 @@ struct NewMemoryView: View {
         .frame(maxWidth: .infinity, alignment: .center)
         .shadow(radius: 3)
         .disabled(disabled)
-        .overlay(alignment: .trailing) {
+    }
+    
+    private func picture(_ image: UIImage) -> some View {
+        ZStack(alignment: .bottomTrailing) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: Constants.width, height: Constants.height)
+                .cornerRadius(15)
+                .shadow(radius: 3)
+            
+            //retake photo button
             Button {
-                if cameraViewModel.position == .back {
-                    cameraViewModel.position = .front
-                } else {
-                    cameraViewModel.position = .back
+                withAnimation {
+                    if selection == 0 {
+                        firstImage = nil
+                    } else {
+                        secondImage = nil
+                    }
+                    
+                    disabled = false
                 }
-                
-                cameraViewModel.setUp()
             } label: {
-                Image(systemName: "arrow.triangle.2.circlepath.camera")
+                Image(systemName: "arrow.triangle.2.circlepath")
                     .foregroundColor(.white)
             }
-            .padding(.horizontal)
+            .padding(5)
+            .background(.ultraThickMaterial)
+            .clipShape(Circle())
+            .shadow(radius: 3)
+            .padding()
         }
     }
     
-    private var imagesLazyHStack: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Title(text: "photo", font: .title3)
-                .padding(.leading)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 5) {
-                    ForEach(images, id: \.self) { image in
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 150, height: 150)
-                            .cornerRadius(15)
-                            .shadow(radius: 3)
-                            .padding(.leading)
-                            .overlay(alignment: .topTrailing) {
-                                Button {
-                                    withAnimation {
-                                        images = images.filter { $0 != image }
-                                    }
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(.red)
-                                        .padding(5)
-                                        .background(.ultraThickMaterial)
-                                        .clipShape(Circle())
-                                        .padding(5)
-                                }
-                            }
-                    }
-                }
+    private var firstNextButton: some View {
+        TextButton(text: "next", size: 330, color: firstImage == nil ? .gray : .blue) {
+            withAnimation {
+                selection = 1
+                
+                disabled = false
+                
+                cameraViewModel.position = .front
+                
+                cameraViewModel.setUp()
+                
             }
-            .frame(height: 150)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .disabled(firstImage == nil)
+    }
+    
+    private var secondNextButton: some View {
+        TextButton(text: "next", size: 330, color: secondImage == nil ? .gray : .blue) {
+            withAnimation {
+                images.append(firstImage!)
+                images.append(secondImage!)
+                
+                selection = 2
+            }
+        }
+        .disabled(secondImage == nil)
+    }
+    
+    private var addDesc: some View {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 15) {
+                Title(text: "desc", font: .title3)
+                
+                VStack {
+                    TextField("optional", text: $text)
+                        .onChange(of: text) { _ in
+                            text = String(text.prefix(Constants.descriptionLimit))
+                        }
+                    
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(.gray)
+                }
+                .shadow(radius: 3)
+            }
+            .padding(.horizontal)
+            
+            Text("\(text.count)/\(Constants.descriptionLimit)")
+                .font(.system(size: 12))
+                .foregroundColor(.gray)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal)
+                .padding(.top, 5)
+        }
     }
     
     private var uploadButton: some View {
-        TextButton(text: "add", size: 330, color: images.isEmpty ? .gray : .blue) {
+        TextButton(text: "add", size: 330, color: firstImage == nil || secondImage == nil ? .gray : .blue) {
+            
             withAnimation {
                 download = true
                 
@@ -168,7 +237,9 @@ struct NewMemoryView: View {
                     download = false
                     
                     if ans {
-                        memoryViewModel.showNewMemoryView = false
+                        memoryViewModel.fetchGlobalMemories()
+                        
+                        dismiss.toggle()
                     }
                 }
             }
@@ -184,16 +255,20 @@ extension NewMemoryView {
         
         var imageURLs = [String](repeating: "", count: images.count)
         
-        uploadedCount = 0
+        var uploadedCount = 0
         
         images.enumerated().forEach { i, image in
-            uploadImage(image: image) { url in
+            memoryViewModel.uploadImage(image: image) { url in
                 if let url = url {
                     imageURLs[i] = url
                     uploadedCount += 1
                     
                     if uploadedCount == images.count {
-                        db.setData(["date": Date(), "images": imageURLs, "userID": id, "userName": memoryViewModel.userName])
+                        if text.isEmpty {
+                            db.setData(["date": Date().addingTimeInterval(-5), "images": imageURLs, "userID": id])
+                        } else {
+                            db.setData(["date": Date().addingTimeInterval(-5), "images": imageURLs, "userID": id, "desc": text])
+                        }
                         
                         completion(true)
                     }
@@ -205,42 +280,14 @@ extension NewMemoryView {
             }
         }
     }
-    
-    private func uploadImage(image: UIImage, _ comletion: @escaping (String?) -> Void) {
-        guard let id = Auth.auth().currentUser?.uid else { return }
-        
-        let storage = Storage.storage().reference().child(id).child("images").child("\(UUID().uuidString).jpg")
-        var data: Data?
-        
-        data = image.jpegData(compressionQuality: 0.7)
-        
-        if let data = data {
-            let _ = storage.putData(data) { _, error in
-                if error != nil {
-                    comletion(nil)
-                }
-                
-                storage.downloadURL { url, error in
-                    if error != nil {
-                        comletion(nil)
-                    }
-                    
-                    if let url = url {
-                        comletion(url.absoluteString)
-                    }
-                }
-            }
-        }
-    }
 }
 
 
 struct CameraPreview: UIViewRepresentable {
     @ObservedObject var camera: CameraViewModel
-    let width: CGFloat
     
     public func makeUIView(context: Context) -> UIView {
-        let frame = CGRect(x: 0, y: 0, width: width, height: width)
+        let frame = CGRect(x: 0, y: 0, width: Constants.width, height: Constants.height)
         let view = UIView(frame: frame)
         
         camera.preview = AVCaptureVideoPreviewLayer(session: camera.session)

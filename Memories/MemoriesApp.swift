@@ -23,11 +23,6 @@ struct MemoriesApp: App {
                 .environment(\.colorScheme, .dark)
                 .preferredColorScheme(.dark)
                 .onAppear(perform: UIApplication.shared.addTapGestureRecognizer)
-                .onOpenURL { url in
-                    if url.absoluteString.count > "https://mymemoriesapp.com/".count {
-                        memoryViewModel.shareURL = url
-                    }
-                }
         }
     }
     

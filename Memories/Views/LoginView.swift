@@ -9,6 +9,8 @@ import SwiftUI
 import AuthenticationServices
 
 struct LoginView: View {
+    
+    @EnvironmentObject private var memoryViewModel: MemoryViewModel
     @EnvironmentObject private var loginViewModel: LoginViewModel
     
     var body: some View {
@@ -22,10 +24,10 @@ struct LoginView: View {
                 VStack(spacing: 15) {
                     Spacer()
                     
-                    Title(text: "welcome")
+                    Title(text: "welcome1")
                         .padding()
                     
-                    Text("welcometext")
+                    Text("welcome2")
                         .bold()
                         .multilineTextAlignment(.center)
                         .foregroundColor(.white)
@@ -54,10 +56,22 @@ struct LoginView: View {
                     .frame(width: width - 100, height: 55)
                     .cornerRadius(15)
                     
-                    Text("welcometext2")
-                        .multilineTextAlignment(.center)
+                    Text("appleid")
+                        .multilineTextAlignment(.leading)
+                        .font(.system(size: 12))
                         .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal)
+                    
+                    Link("privacy", destination: URL(string: "https://mymemoriesapp.com/Privacy/Privacy.html")!)
+                        .font(.system(size: 13))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading)
+                    
+                    Link("eula", destination: URL(string: "https://mymemoriesapp.com/Privacy/Privacy.html")!)
+                        .font(.system(size: 13))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading)
                 }
                 .padding(.bottom)
             }

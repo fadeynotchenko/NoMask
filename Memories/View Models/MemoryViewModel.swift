@@ -14,9 +14,14 @@ import AVKit
 
 class MemoryViewModel: ObservableObject {
     
-    //self data
-    @Published var memories = [Memory]()
-    @Published var userName = "";
+    //global data
+    @Published var globalMemories = [Memory]()
+    
+    //admin
+    @Published var admins = [String]()
+    
+    @Published var userNickname = "";
+    @Published var userAvatar: URL?
     @Published var userIsBannded = false
     
     //load data status
@@ -24,55 +29,74 @@ class MemoryViewModel: ObservableObject {
     @Published var loadGlobalMemoriesStatus: LoadDataStatus = .start
     @Published var loadMemoryByIDStatus: LoadDataStatus = .finish
     
-    //detail memory
-    
-    @Published var shareURL: URL?
-    
-    //views
-    @Published var showNewMemoryView = false
-    @Published var showProfileView = false
-    
     @Published var imageDownloaded = false
     
-    func fetchMyMemories() {
-        guard let id = Auth.auth().currentUser?.uid else { return }
-        
+    @Published var limit = Constants.fetchLimit
+    
+    func fetchGlobalMemories() {
         self.loadMyMemoriesStatus = .start
-        self.memories.removeAll()
         
         //listening self memories
-        Firestore.firestore().collection("Global Memories").getDocuments { snapshots, error in
+        Firestore.firestore().collection("Global Memories").limit(to: limit).order(by: "date", descending: true).getDocuments { snapshots, error in
             if let documents = snapshots?.documents, error == nil {
-                self.memories = documents.map { snapshot -> Memory in
+                
+                self.globalMemories = documents.map { snapshot -> Memory in
                     let data = snapshot.data()
                     
                     let date = (data["date"] as! Timestamp).dateValue()
                     let images = (data["images"] as! [String]).map { URL(string: $0)! }
-                    let userName = data["userName"] as! String
+//                    let nickname = data["nickname"] as! String
                     let userID = data["userID"] as! String
-                    let userImage = URL(string: (data["userImage"] as? String ?? ""))
+                    let descText = data["desc"] as? String
+//                    let userImage = URL(string: (data["userImage"] as? String ?? ""))
                     
-                    return Memory(userID: userID, userName: userName, userImage: userImage, date: date, images: images)
+//                    self.fetchUserData(userID: userID) { url, nick in
+//                        return Memory(memoryID: snapshot.documentID, userID: userID, userNickname: nick, userImage: url, date: date, images: images)
+//                    }
+                    
+                    return Memory(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
                 }
                 
                 self.loadMyMemoriesStatus = .finish
             }
         }
+    }
+    
+    func fetchUserData(userID: String, _ completion: @escaping (URL?, String) -> ()) {
+        Firestore.firestore().collection("User Data").document(userID).getDocument { snapshot, error in
+            if let userData = snapshot?.data(), error == nil {
+                let userImage = URL(string: (userData["image"] as? String ?? ""))
+                let userNickname = userData["nickname"] as! String
+                
+                completion(userImage, userNickname)
+            }
+        }
+    }
+    
+    func fetchSelfData() {
+        guard let id = Auth.auth().currentUser?.uid else { return }
         
         Firestore.firestore().collection("User Data").document(id).addSnapshotListener { snapshot, error in
             if let data = snapshot?.data(), error == nil {
-                if let name = data["name"] as? String {
-                    self.userName = name
-                }
+                self.userNickname = data["nickname"] as? String ?? ""
                 
-                if let userIsBanned = data["banned"] as? Bool {
-                    self.userIsBannded = userIsBanned
-                } else {
-                    self.userIsBannded = false
+                self.userIsBannded = data["banned"] as? Bool ?? false
+                
+                if let url = data["image"] as? String, let userAvatar = URL(string: url) {
+                    self.userAvatar = userAvatar
                 }
             }
         }
     }
+    
+    func fetchAdmins() {
+        Firestore.firestore().collection("Admins").document("ID").getDocument { snapshot, error in
+            if let data = snapshot?.data(), error == nil {
+                self.admins = data["admins"] as? [String] ?? []
+            }
+        }
+    }
+    
     
 //    func fetchMemoryByLink(_ url: String, _ completion: @escaping (Memory?) -> ()) {
 //        withAnimation {
@@ -97,31 +121,30 @@ class MemoryViewModel: ObservableObject {
 //        }
 //    }
     
-    func saveImageToGallery(_ url: URL, _ completion: @escaping (Bool) -> ()) {
-        Storage.storage().reference(forURL: url.absoluteString).getData(maxSize: 10 * 1024 * 1024) { data, err in
-            if let data = data, let image = UIImage(data: data), err == nil {
-                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+     func uploadImage(image: UIImage, _ comletion: @escaping (String?) -> Void) {
+        guard let id = Auth.auth().currentUser?.uid else { return }
+        
+        let storage = Storage.storage().reference().child(id).child("images").child("\(UUID().uuidString).jpg")
+        var data: Data?
+        
+        data = image.jpegData(compressionQuality: 0.7)
+        
+        if let data = data {
+            let _ = storage.putData(data) { _, error in
+                if error != nil {
+                    comletion(nil)
+                }
                 
-                completion(true)
-            } else {
-                completion(false)
+                storage.downloadURL { url, error in
+                    if error != nil {
+                        comletion(nil)
+                    }
+                    
+                    if let url = url {
+                        comletion(url.absoluteString)
+                    }
+                }
             }
         }
     }
-    
-//    func fetch() {
-//        let id = "cvENN1aPJ1dotPCKZf9DElBu4EK2"
-//        Firestore.firestore().collection(id).getDocuments { snap, _ in
-//            if let documents = snap?.documents {
-//                for document in documents {
-//                    let data = document.data()
-//                    if let name = data["name"] as? String, let timestamp = data["date"] as? Timestamp, let images = data["images"] as? [String] {
-//                        let text = data["text"] as? String
-//                        Firestore.firestore().collection("Self Memories").document(id).collection("Memories").document().setData(["name": name, "date": timestamp.dateValue(), "images": images, "text": text])
-//                    }
-//
-//                }
-//            }
-//        }
-//    }
 }

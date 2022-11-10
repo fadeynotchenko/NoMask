@@ -15,22 +15,9 @@ struct ContentView: View {
     
     var body: some View {
         if isLoggin {
-            MemoriesView()
-        } else if memoryViewModel.userIsBannded {
-            BannedView()
+            GlobalMemoriesView()
         } else {
             LoginView()
-        }
-    }
-    
-    private struct BannedView: View {
-        var body: some View {
-            ZStack {
-                Color("Background").edgesIgnoringSafeArea(.all)
-                
-                Text("Your account is banned")
-                    .foregroundColor(.gray)
-            }
         }
     }
 }
