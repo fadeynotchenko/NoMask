@@ -63,12 +63,12 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal)
                     
-                    Link("privacy", destination: URL(string: "https://mymemoriesapp.com/Privacy/Privacy.html")!)
+                    Link("privacy", destination: URL(string: "https://appnomask.com/Privasy.html")!)
                         .font(.system(size: 13))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading)
                     
-                    Link("eula", destination: URL(string: "https://mymemoriesapp.com/Privacy/Privacy.html")!)
+                    Link("eula", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
                         .font(.system(size: 13))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading)

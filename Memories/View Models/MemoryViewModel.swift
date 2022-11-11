@@ -31,33 +31,56 @@ class MemoryViewModel: ObservableObject {
     
     @Published var imageDownloaded = false
     
-    @Published var limit = Constants.fetchLimit
+    @Published var limit = Constants.FETCH_LIMIT
+    @Published var last: QueryDocumentSnapshot?
     
     func fetchGlobalMemories() {
         self.loadMyMemoriesStatus = .start
         
-        //listening self memories
-        Firestore.firestore().collection("Global Memories").limit(to: limit).order(by: "date", descending: true).getDocuments { snapshots, error in
+        Firestore.firestore().collection("Global Memories").order(by: "date", descending: true).limit(to: limit).getDocuments { snapshots, error in
             if let documents = snapshots?.documents, error == nil {
-                
                 self.globalMemories = documents.map { snapshot -> Memory in
                     let data = snapshot.data()
                     
                     let date = (data["date"] as! Timestamp).dateValue()
                     let images = (data["images"] as! [String]).map { URL(string: $0)! }
-//                    let nickname = data["nickname"] as! String
                     let userID = data["userID"] as! String
                     let descText = data["desc"] as? String
-//                    let userImage = URL(string: (data["userImage"] as? String ?? ""))
-                    
-//                    self.fetchUserData(userID: userID) { url, nick in
-//                        return Memory(memoryID: snapshot.documentID, userID: userID, userNickname: nick, userImage: url, date: date, images: images)
-//                    }
                     
                     return Memory(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
                 }
                 
+                if let last = documents.last {
+                    self.last = last
+                }
+                
                 self.loadMyMemoriesStatus = .finish
+            }
+        }
+    }
+    
+    func fetchGlobalMemoriesByLast() {
+        if let last = last {
+            Firestore.firestore().collection("Global Memories").order(by: "date", descending: true).limit(to: limit).start(atDocument: last).getDocuments { snapshots, error in
+                if let documents = snapshots?.documents, error == nil {
+                    let arr = documents.map { snapshot -> Memory in
+                        let data = snapshot.data()
+                        
+                        let date = (data["date"] as! Timestamp).dateValue()
+                        let images = (data["images"] as! [String]).map { URL(string: $0)! }
+                        let userID = data["userID"] as! String
+                        let descText = data["desc"] as? String
+                        
+                        return Memory(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
+                    }
+                    
+                    self.globalMemories.removeLast()
+                    self.globalMemories.append(contentsOf: arr)
+                    
+                    if let last = documents.last {
+                        self.last = last
+                    }
+                }
             }
         }
     }

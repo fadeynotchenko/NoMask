@@ -179,10 +179,10 @@ struct Permission: View {
 struct Download: View {
     var body: some View {
         ProgressView()
-            .shadow(radius: 3)
             .padding()
             .background(.ultraThickMaterial)
             .cornerRadius(15)
+            .shadow(radius: 3)
     }
 }
 
@@ -196,7 +196,7 @@ struct NicknameTF: View {
             VStack {
                 TextField("nickname", text: $nickname)
                     .onChange(of: nickname) { _ in
-                        nickname = String(nickname.prefix(Constants.nicknameLimit))
+                        nickname = String(nickname.prefix(Constants.NICKNAME_LIMIT))
                         }
                 
                 Rectangle()
@@ -205,7 +205,7 @@ struct NicknameTF: View {
             }
             .shadow(radius: 3)
             .overlay(alignment: .trailing) {
-                Text("\(nickname.count)/\(Constants.nicknameLimit)")
+                Text("\(nickname.count)/\(Constants.NICKNAME_LIMIT)")
                     .font(.system(size: 12))
                     .foregroundColor(.gray)
             }

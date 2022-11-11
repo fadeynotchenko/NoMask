@@ -19,8 +19,8 @@
 "reportSent" = "Report sent";
 "showReportDialog" = "Are you sure you want to report this post?";
 "reportDialogButton" = "Submit Report";
-"camera1" = "Front Camera";
-"camera2" = "Rear Camera";
+"camera2" = "Front Camera";
+"camera1" = "Rear Camera";
 "next" = "Next";
 "preview" = "Preview";
 "nicknametext" = "Create a nickname to continue";
@@ -28,3 +28,4 @@
 "photopermission" = "A photo permission is required to upload a new avatar";
 "desc" = "Description";
 "optional" = "(Optional)";
+"fetchnext" = "Load more";

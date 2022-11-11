@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Firebase
-import RevenueCat
 
 @main
 struct MemoriesApp: App {
@@ -18,8 +17,8 @@ struct MemoriesApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(loginViewModel)
                 .environmentObject(memoryViewModel)
+                .environmentObject(loginViewModel)
                 .environment(\.colorScheme, .dark)
                 .preferredColorScheme(.dark)
                 .onAppear(perform: UIApplication.shared.addTapGestureRecognizer)
@@ -27,9 +26,6 @@ struct MemoriesApp: App {
     }
     
     init() {
-        Purchases.logLevel = .error
-        Purchases.configure(withAPIKey: Secrets.API)
-        
         FirebaseApp.configure()
         
         do {

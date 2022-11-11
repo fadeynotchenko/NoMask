@@ -207,7 +207,7 @@ struct NewMemoryView: View {
                 VStack {
                     TextField("optional", text: $text)
                         .onChange(of: text) { _ in
-                            text = String(text.prefix(Constants.descriptionLimit))
+                            text = String(text.prefix(Constants.DESCRIPTION_LIMIT))
                         }
                     
                     Rectangle()
@@ -218,7 +218,7 @@ struct NewMemoryView: View {
             }
             .padding(.horizontal)
             
-            Text("\(text.count)/\(Constants.descriptionLimit)")
+            Text("\(text.count)/\(Constants.DESCRIPTION_LIMIT)")
                 .font(.system(size: 12))
                 .foregroundColor(.gray)
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -237,9 +237,11 @@ struct NewMemoryView: View {
                     download = false
                     
                     if ans {
-                        memoryViewModel.fetchGlobalMemories()
-                        
                         dismiss.toggle()
+                        
+                        DispatchQueue.main.async {
+                            self.memoryViewModel.fetchGlobalMemories()
+                        }
                     }
                 }
             }
@@ -265,9 +267,9 @@ extension NewMemoryView {
                     
                     if uploadedCount == images.count {
                         if text.isEmpty {
-                            db.setData(["date": Date().addingTimeInterval(-5), "images": imageURLs, "userID": id])
+                            db.setData(["date": Date(), "images": imageURLs, "userID": id])
                         } else {
-                            db.setData(["date": Date().addingTimeInterval(-5), "images": imageURLs, "userID": id, "desc": text])
+                            db.setData(["date": Date(), "images": imageURLs, "userID": id, "desc": text])
                         }
                         
                         completion(true)

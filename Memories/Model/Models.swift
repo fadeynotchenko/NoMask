@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct Memory: Identifiable {
+struct Memory: Hashable, Identifiable {
     var id = UUID()
     var memoryID: String
     var userID: String

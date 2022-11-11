@@ -46,33 +46,20 @@ struct GlobalMemoriesView: View {
                     ProgressView()
                         .shadow(radius: 3)
                 }
-                
+                    
                 ScrollView {
                     LazyVStack(spacing: 20) {
-                        ForEach(0..<memoryViewModel.globalMemories.count, id: \.self) { i in
-                            let memory = memoryViewModel.globalMemories[i]
-                            
+                        ForEach(memoryViewModel.globalMemories) { memory in
                             MemoryCardView(imageDownloaded: $imageDownloaded, showReportDialog: $showReportDialog, currentMemory: $currentMemory, memory: memory)
-                                .onAppear {
-                                    //for infinity scroll
-                                    if i == memoryViewModel.globalMemories.count - 1 {
-                                        memoryViewModel.limit += Constants.fetchLimit
-                                        
-                                        memoryViewModel.fetchGlobalMemories()
-                                    }
-                                }
                         }
                     }
                     .offset(y: 70)
                     .padding(.bottom, 70)
-                    .background(GeometryReader {
-                        Color.clear.preference(key: ViewOffsetKey.self, value: -$0.frame(in: .named("scroll")).origin.y)
-                    })
-//                    .onPreferenceChange(ViewOffsetKey.self) {
-//                        position = $0
-//                    }
+                    
+                    if memoryViewModel.loadMyMemoriesStatus == .finish, let last = memoryViewModel.globalMemories.last, last.memoryID != Constants.LAST_POST_ID {
+                        fetchNextButton
+                    }
                 }
-                .coordinateSpace(name: "scroll")
             }
             .overlay(alignment: .top) {
                 header
@@ -156,6 +143,12 @@ struct GlobalMemoriesView: View {
         }
         .frame(maxWidth: Constants.width - 20, alignment: .center)
         
+    }
+    
+    private var fetchNextButton: some View {
+        TextButton(text: "fetchnext", size: 330, color: .white) {
+            memoryViewModel.fetchGlobalMemoriesByLast()
+        }
     }
 }
 

@@ -12,7 +12,9 @@ class Constants {
     static let width = UIScreen.main.bounds.width - 20
     static let height = (UIScreen.main.bounds.width - 20) * 1.2
     
-    static let fetchLimit = 15
-    static let nicknameLimit = 15
-    static let descriptionLimit = 69
+    static let FETCH_LIMIT = 21 // 20 because last element remove
+    static let NICKNAME_LIMIT = 15
+    static let DESCRIPTION_LIMIT = 69
+    
+    static let LAST_POST_ID = "kkQWxQWCztl5Q6kcDa86"
 }
