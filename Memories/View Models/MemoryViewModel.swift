@@ -16,18 +16,20 @@ class MemoryViewModel: ObservableObject {
     
     //global data
     @Published var globalMemories = [Memory]()
+    @Published var personalMemories = [Memory]()
     
     //admin
     @Published var admins = [String]()
     
+    //user data
     @Published var userNickname = "";
     @Published var userAvatar: URL?
     @Published var userIsBannded = false
+    @Published var ignorePosts = [String]()
     
     //load data status
     @Published var loadMyMemoriesStatus: LoadDataStatus = .start
     @Published var loadGlobalMemoriesStatus: LoadDataStatus = .start
-    @Published var loadMemoryByIDStatus: LoadDataStatus = .finish
     
     @Published var imageDownloaded = false
     
@@ -35,7 +37,7 @@ class MemoryViewModel: ObservableObject {
     @Published var last: QueryDocumentSnapshot?
     
     func fetchGlobalMemories() {
-        self.loadMyMemoriesStatus = .start
+        self.loadGlobalMemoriesStatus = .start
         
         Firestore.firestore().collection("Global Memories").order(by: "date", descending: true).limit(to: limit).getDocuments { snapshots, error in
             if let documents = snapshots?.documents, error == nil {
@@ -54,7 +56,7 @@ class MemoryViewModel: ObservableObject {
                     self.last = last
                 }
                 
-                self.loadMyMemoriesStatus = .finish
+                self.loadGlobalMemoriesStatus = .finish
             }
         }
     }
@@ -85,6 +87,30 @@ class MemoryViewModel: ObservableObject {
         }
     }
     
+    func fetchPersonalMemories() {
+        guard let id = Auth.auth().currentUser?.uid else { return }
+        
+        self.loadMyMemoriesStatus = .start
+        
+        Firestore.firestore().collection("Global Memories").whereField("userID", isEqualTo: id).order(by: "date", descending: true).getDocuments { snapshots, error in
+            if let documents = snapshots?.documents, error == nil {
+                print(documents)
+                self.personalMemories = documents.map { snapshot -> Memory in
+                    let data = snapshot.data()
+                    
+                    let date = (data["date"] as! Timestamp).dateValue()
+                    let images = (data["images"] as! [String]).map { URL(string: $0)! }
+                    let userID = data["userID"] as! String
+                    let descText = data["desc"] as? String
+                    
+                    return Memory(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
+                }
+                
+                self.loadMyMemoriesStatus = .finish
+            }
+        }
+    }
+    
     func fetchUserData(userID: String, _ completion: @escaping (URL?, String) -> ()) {
         Firestore.firestore().collection("User Data").document(userID).getDocument { snapshot, error in
             if let userData = snapshot?.data(), error == nil {
@@ -108,6 +134,8 @@ class MemoryViewModel: ObservableObject {
                 if let url = data["image"] as? String, let userAvatar = URL(string: url) {
                     self.userAvatar = userAvatar
                 }
+                
+                self.ignorePosts = data["ignore"] as? [String] ?? []
             }
         }
     }

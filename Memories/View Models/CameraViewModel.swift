@@ -156,7 +156,7 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
     func savePhoto() {
         
         if let uiImage = UIImage(data: mediaData) {
-            if let data = uiImage.jpegData(compressionQuality: 0.8) {
+            if let data = uiImage.jpegData(compressionQuality: 0.7) {
                 let tempFile = NSTemporaryDirectory() + "photo.jpg"
                 try? data.write(to: URL(fileURLWithPath: tempFile))
                 self.previewURL = URL(fileURLWithPath: tempFile)

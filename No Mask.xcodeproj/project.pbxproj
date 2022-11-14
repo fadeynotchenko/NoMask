@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		43050D46291937B100025BEB /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43050D45291937B100025BEB /* ImagePicker.swift */; };
-		43260BB4291BFC40003CFC49 /* MemoryCardPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43260BB3291BFC40003CFC49 /* MemoryCardPreview.swift */; };
 		432C678D28F9E7D200A7A9F2 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 432C678C28F9E7D200A7A9F2 /* Launch Screen.storyboard */; };
 		43332E1A28EB3D2B006E017B /* MemoriesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43332E1928EB3D2B006E017B /* MemoriesApp.swift */; };
 		43332E1C28EB3D2B006E017B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43332E1B28EB3D2B006E017B /* ContentView.swift */; };
@@ -18,6 +17,8 @@
 		43332E3B28EB4638006E017B /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43332E3A28EB4638006E017B /* LoginView.swift */; };
 		43332E3E28EB4FE6006E017B /* GlobalMemoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43332E3D28EB4FE6006E017B /* GlobalMemoriesView.swift */; };
 		43332E4328EB5D92006E017B /* AlertToast in Frameworks */ = {isa = PBXBuildFile; productRef = 43332E4228EB5D92006E017B /* AlertToast */; };
+		4335698829227967001090F4 /* PersonalMemoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4335698729227967001090F4 /* PersonalMemoriesView.swift */; };
+		4335698A29227CA2001090F4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4335698929227CA2001090F4 /* SettingsView.swift */; };
 		4335C56C28F22CE7005BB3A3 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4335C56B28F22CE7005BB3A3 /* GoogleService-Info.plist */; };
 		43475E99290975FE000366C0 /* MemoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43475E98290975FE000366C0 /* MemoryCardView.swift */; };
 		434827A6290C1AD300F6700A /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434827A5290C1AD300F6700A /* Secrets.swift */; };
@@ -55,7 +56,6 @@
 
 /* Begin PBXFileReference section */
 		43050D45291937B100025BEB /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
-		43260BB3291BFC40003CFC49 /* MemoryCardPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryCardPreview.swift; sourceTree = "<group>"; };
 		432C678C28F9E7D200A7A9F2 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		432C67AB28F9F2C100A7A9F2 /* RandomWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RandomWidgetExtension.entitlements; sourceTree = "<group>"; };
 		43332E1628EB3D2B006E017B /* No Mask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "No Mask.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -67,6 +67,8 @@
 		43332E3A28EB4638006E017B /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		43332E3C28EB477B006E017B /* Memories.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Memories.entitlements; sourceTree = "<group>"; };
 		43332E3D28EB4FE6006E017B /* GlobalMemoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalMemoriesView.swift; sourceTree = "<group>"; };
+		4335698729227967001090F4 /* PersonalMemoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalMemoriesView.swift; sourceTree = "<group>"; };
+		4335698929227CA2001090F4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		4335C56B28F22CE7005BB3A3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		43475E98290975FE000366C0 /* MemoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryCardView.swift; sourceTree = "<group>"; };
 		434771D328F5E5FB00BE0214 /* MemoryWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MemoryWidgetExtension.entitlements; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				43561F8729183CEB00615B67 /* ProfileView.swift */,
 				43561F892918484700615B67 /* EditProfileView.swift */,
 				43050D45291937B100025BEB /* ImagePicker.swift */,
+				4335698929227CA2001090F4 /* SettingsView.swift */,
 			);
 			path = Profile;
 			sourceTree = "<group>";
@@ -180,8 +183,8 @@
 			isa = PBXGroup;
 			children = (
 				43332E3D28EB4FE6006E017B /* GlobalMemoriesView.swift */,
+				4335698729227967001090F4 /* PersonalMemoriesView.swift */,
 				43475E98290975FE000366C0 /* MemoryCardView.swift */,
-				43260BB3291BFC40003CFC49 /* MemoryCardPreview.swift */,
 				43561F832917A66300615B67 /* NewMemoryView.swift */,
 			);
 			path = Memory;
@@ -313,6 +316,7 @@
 				43BE6179290F080900831D5C /* GlobalExtensions.swift in Sources */,
 				43561F8A2918484700615B67 /* EditProfileView.swift in Sources */,
 				43050D46291937B100025BEB /* ImagePicker.swift in Sources */,
+				4335698A29227CA2001090F4 /* SettingsView.swift in Sources */,
 				434F545728FF0469003EC60C /* Models.swift in Sources */,
 				43BE6176290F07E700831D5C /* CustomViews.swift in Sources */,
 				439C0F0C28EB9E46004BC325 /* MemoryViewModel.swift in Sources */,
@@ -320,10 +324,10 @@
 				434827A6290C1AD300F6700A /* Secrets.swift in Sources */,
 				43561F8829183CEB00615B67 /* ProfileView.swift in Sources */,
 				43332E1C28EB3D2B006E017B /* ContentView.swift in Sources */,
+				4335698829227967001090F4 /* PersonalMemoriesView.swift in Sources */,
 				43561F862917E2F800615B67 /* CameraViewModel.swift in Sources */,
 				43475E99290975FE000366C0 /* MemoryCardView.swift in Sources */,
 				43332E3B28EB4638006E017B /* LoginView.swift in Sources */,
-				43260BB4291BFC40003CFC49 /* MemoryCardPreview.swift in Sources */,
 				43332E1A28EB3D2B006E017B /* MemoriesApp.swift in Sources */,
 				43561F842917A66300615B67 /* NewMemoryView.swift in Sources */,
 				434F545528FF044F003EC60C /* Constant.swift in Sources */,

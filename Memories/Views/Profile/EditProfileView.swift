@@ -34,12 +34,12 @@ struct EditProfileView: View {
                     showPickerView = true
                 } label: {
                      if let photo = photo {
-                        Avatar(avatarType: .image(photo), size: CGSize(width: 150, height: 150))
+                         Avatar(avatarType: .image(photo), size: CGSize(width: 150, height: 150), downloadImage: false)
                     } else {
                         if let url = memoryViewModel.userAvatar {
-                            Avatar(avatarType: .url(url), size: CGSize(width: 150, height: 150))
+                            Avatar(avatarType: .url(url), size: CGSize(width: 150, height: 150), downloadImage: true)
                         } else {
-                            Avatar(avatarType: .empty, size: CGSize(width: 150, height: 150))
+                            Avatar(avatarType: .empty, size: CGSize(width: 150, height: 150), downloadImage: false)
                         }
                     }
                 }

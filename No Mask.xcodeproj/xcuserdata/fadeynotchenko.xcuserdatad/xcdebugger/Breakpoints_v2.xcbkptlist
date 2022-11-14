@@ -174,8 +174,8 @@
             filePath = "Memories/View Models/MemoryViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "42"
-            endingLineNumber = "42"
+            startingLineNumber = "44"
+            endingLineNumber = "44"
             landmarkName = "fetchGlobalMemories()"
             landmarkType = "7">
          </BreakpointContent>
@@ -194,6 +194,54 @@
             endingLineNumber = "239"
             landmarkName = "uploadButton"
             landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Memories/View Models/MemoryViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "96"
+            endingLineNumber = "96"
+            landmarkName = "fetchPersonalMemories()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A - 7f1fd69769c0dcf8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Swift.Optional&lt;__C.FIRQuerySnapshot&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in No_Mask.MemoryViewModel.fetchPersonalMemories() -&gt; ()"
+                  moduleName = "No Mask"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/fadeynotchenko/Documents/Memories-AppStore-/Memories/View%20Models/MemoryViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "94"
+                  endingLineNumber = "94"
+                  offsetFromSymbolStart = "68">
+               </Location>
+               <Location
+                  uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A - 7f1fd69769c0dcf8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Swift.Optional&lt;__C.FIRQuerySnapshot&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in No_Mask.MemoryViewModel.fetchPersonalMemories() -&gt; ()"
+                  moduleName = "No Mask"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/fadeynotchenko/Documents/Memories-AppStore-/Memories/View%20Models/MemoryViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "94"
+                  endingLineNumber = "94"
+                  offsetFromSymbolStart = "224">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

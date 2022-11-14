@@ -34,7 +34,7 @@ struct TextButton: View {
         } label: {
             Text(text)
                 .bold()
-                .font(.title3)
+                .font(.headline)
                 .foregroundColor(color)
                 .padding()
                 .frame(width: size)
@@ -72,12 +72,13 @@ struct Avatar: View {
     
     let avatarType: AvatarImageType
     let size: CGSize
+    var downloadImage: Bool
     
     var body: some View {
         switch avatarType {
         case .url(let url):
             KFImage(url)
-                .loadDiskFileSynchronously()
+                .loadDiskFileSynchronously(downloadImage)
                 .resizable()
                 .placeholder {
                     ProgressView()
@@ -117,10 +118,12 @@ struct Avatar: View {
 struct ImageItem: View {
     let url: URL
     let size: CGSize
+    var loadDisk: Bool
     
     var body: some View {
         KFImage(url)
-            .cacheMemoryOnly()
+            .cacheMemoryOnly(!loadDisk)
+            .loadDiskFileSynchronously(loadDisk)
             .resizable()
             .placeholder {
                 ProgressView()

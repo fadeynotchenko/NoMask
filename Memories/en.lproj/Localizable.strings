@@ -4,7 +4,7 @@
 "add" = "Publish";
 "fullname" = "Your name";
 "nickname" = "Nickname";
-"global" = "Global Posts";
+"global" = "Global post";
 "logout" = "Logout";
 "editprofile" = "Edit profile";
 "save" = "Save";
@@ -29,3 +29,10 @@
 "desc" = "Description";
 "optional" = "(Optional)";
 "fetchnext" = "Load more";
+"emptylist" = "The list is empty";
+"hide" = "Hide post";
+"deleteacc" = "Delete account";
+"ban" = "Ban user";
+"my" = "My posts";
+"delete" = "Delete";
+"settings" = "Settings";

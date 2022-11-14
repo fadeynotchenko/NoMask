@@ -13,7 +13,6 @@ import FirebaseFirestore
 
 struct MemoryCardView: View {
     
-    @Binding var imageDownloaded: Bool
     @Binding var showReportDialog: Bool
     @Binding var currentMemory: Memory?
     @State var memory: Memory
@@ -30,7 +29,7 @@ struct MemoryCardView: View {
                 ForEach(0..<memory.images.count, id: \.self) { i in
                     if let url = memory.images[i] {
                         VStack(spacing: 0) {
-                            ImageItem(url: url, size: CGSize(width: Constants.width, height: Constants.height))
+                            ImageItem(url: url, size: CGSize(width: Constants.width, height: Constants.height), loadDisk: true)
                                 .onTapGesture {
                                     withAnimation {
                                         selection = selection == 0 ? 1 : 0
@@ -60,23 +59,38 @@ struct MemoryCardView: View {
     private var menuButton: some View {
         Menu {
             Button {
-                downloadImageToPhoto { ans in
-                    imageDownloaded = ans
-                }
+                downloadImageToPhoto()
             } label: {
                 Label("savephoto", systemImage: "square.and.arrow.down")
             }
             
-            Button(role: .destructive) {
-                showReportDialog = true
+            if memory.userID != Auth.auth().currentUser?.uid {
+                Button(role: .destructive) {
+                    showReportDialog = true
+                    
+                    currentMemory = memory
+                } label: {
+                    Label("report", systemImage: "exclamationmark.triangle")
+                }
+                .accentColor(.red)
                 
-                currentMemory = memory
-            } label: {
-                Label("report", systemImage: "exclamationmark.triangle")
+                Button(role: .destructive) {
+                    hidePost()
+                } label: {
+                    Label("ban", systemImage: "person.badge.minus")
+                }
+                .accentColor(.red)
+            } else {
+                Button(role: .destructive) {
+                    deletePost()
+                } label: {
+                    Label("delete", systemImage: "trash")
+                }
             }
-            .accentColor(.red)
             
             if let id = Auth.auth().currentUser?.uid, memoryViewModel.admins.contains(id) {
+                Text("For Admin")
+                
                 Button(role: .destructive) {
                     deletePost()
                 } label: {
@@ -108,10 +122,10 @@ struct MemoryCardView: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
                 if let url = memory.userImage, !url.absoluteString.isEmpty {
-                    Avatar(avatarType: .url(url), size: CGSize(width: 40, height: 40))
+                    Avatar(avatarType: .url(url), size: CGSize(width: 40, height: 40), downloadImage: true)
                         .padding(.leading)
                 } else {
-                    Avatar(avatarType: .empty, size: CGSize(width: 40, height: 40))
+                    Avatar(avatarType: .empty, size: CGSize(width: 40, height: 40), downloadImage: false)
                         .padding(.leading)
                 }
                 
@@ -157,23 +171,11 @@ struct MemoryCardView: View {
 }
 
 extension MemoryCardView {
-    private func downloadImageToPhoto(_ completion: @escaping (Bool) -> ()) {
-        var cnt = 0
-        
+    private func downloadImageToPhoto() {
         memory.images.forEach { image in
             Storage.storage().reference(forURL: image.absoluteString).getData(maxSize: 10 * 1024 * 1024) { data, error in
                 if let data = data, error == nil, let image = UIImage(data: data) {
                     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    
-                    cnt += 1
-                    
-                    if cnt == 2 {
-                        completion(true)
-                    }
-                } else {
-                    completion(false)
-                    
-                    return
                 }
             }
         }
@@ -186,4 +188,13 @@ extension MemoryCardView {
     private func banUser() {
         Firestore.firestore().collection("User Data").document(memory.userID).updateData(["banned": true])
     }
+    
+    private func hidePost() {
+        guard let id = Auth.auth().currentUser?.uid else { return }
+        
+        memoryViewModel.ignorePosts.append(memory.userID)
+        
+        Firestore.firestore().collection("User Data").document(id).updateData(["ignore": memoryViewModel.ignorePosts])
+    }
 }
+

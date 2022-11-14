@@ -29,7 +29,6 @@ struct GlobalMemoriesView: View {
     @State private var currentMemory: Memory?
     
     //toasts
-    @State private var imageDownloaded = false
     @State private var reportSent = false
     
     //dialogs
@@ -37,29 +36,26 @@ struct GlobalMemoriesView: View {
     
     @State private var position: CGFloat = 0
     
+    private var globalMemories: [Memory] {
+        let set = Set(memoryViewModel.ignorePosts)
+        let set2 = Set(memoryViewModel.globalMemories)
+        
+        let arr = set2.filter { !set.contains($0.userID) }.sorted { $0.date > $1.date }
+        
+        return arr
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
-                if memoryViewModel.loadMyMemoriesStatus == .start {
+                if memoryViewModel.loadGlobalMemoriesStatus == .start {
                     ProgressView()
                         .shadow(radius: 3)
                 }
-                    
-                ScrollView {
-                    LazyVStack(spacing: 20) {
-                        ForEach(memoryViewModel.globalMemories) { memory in
-                            MemoryCardView(imageDownloaded: $imageDownloaded, showReportDialog: $showReportDialog, currentMemory: $currentMemory, memory: memory)
-                        }
-                    }
-                    .offset(y: 70)
-                    .padding(.bottom, 70)
-                    
-                    if memoryViewModel.loadMyMemoriesStatus == .finish, let last = memoryViewModel.globalMemories.last, last.memoryID != Constants.LAST_POST_ID {
-                        fetchNextButton
-                    }
-                }
+                
+                global
             }
             .overlay(alignment: .top) {
                 header
@@ -76,18 +72,6 @@ struct GlobalMemoriesView: View {
             .fullScreenCover(isPresented: $showNickNameView) {
                 NicknameView(dismiss: $showNickNameView, showNewMemoryView: $showNewMemoryView)
             }
-            .overlay {
-                if memoryViewModel.loadMemoryByIDStatus == .start {
-                    ProgressView()
-                        .frame(width: 50, height: 50)
-                        .background(.ultraThickMaterial)
-                        .cornerRadius(15)
-                        .shadow(radius: 3)
-                }
-            }
-            .toast(isPresenting: $imageDownloaded) {
-                AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: NSLocalizedString("imageDownloaded", comment: ""))
-            }
             .toast(isPresenting: $reportSent) {
                 AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: NSLocalizedString("reportSent", comment: ""))
             }
@@ -101,12 +85,30 @@ struct GlobalMemoriesView: View {
                 Text("showReportDialog")
             }
             .onAppear {
-                memoryViewModel.fetchGlobalMemories()
-                
                 memoryViewModel.fetchSelfData()
                 
                 memoryViewModel.fetchAdmins()
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var global: some View {
+        ScrollView {
+            LazyVStack(spacing: 20) {
+                ForEach(globalMemories) { memory in
+                    MemoryCardView(showReportDialog: $showReportDialog, currentMemory: $currentMemory, memory: memory)
+                }
+            }
+            .offset(y: 70)
+            .padding(.bottom, 70)
+            
+            if memoryViewModel.loadGlobalMemoriesStatus == .finish {
+                fetchNextButton
+            }
+        }
+        .onAppear {
+            memoryViewModel.fetchGlobalMemories()
         }
     }
     
@@ -131,14 +133,11 @@ struct GlobalMemoriesView: View {
                     .font(.system(size: 13))
                     .shadow(radius: 3)
             }
-//            .opacity(position <= 0 ? (Double(abs(position) / 100) < 0 ? Double(abs(position) / 100) : 0) : 1)
             
             Spacer()
             
             ImageButton(systemName: "person.fill", color: .white) {
                 showProfileView = true
-//                memoryViewModel.limit = 10
-//                memoryViewModel.fetchGlobalMemories()
             }
         }
         .frame(maxWidth: Constants.width - 20, alignment: .center)

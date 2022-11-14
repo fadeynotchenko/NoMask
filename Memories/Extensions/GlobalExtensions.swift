@@ -29,6 +29,14 @@ extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape( RoundedCorner(radius: radius, corners: corners) )
     }
+    
+    func backgroundShadow() -> some View {
+        if #available(iOS 16.0, *) {
+            return self.background(Color("Background").shadow(.inner(radius: 30)))
+        } else {
+            return self.background(Color("Background"))
+        }
+    }
 }
 
 extension Date {
@@ -37,6 +45,14 @@ extension Date {
         formatter.unitsStyle = .full
         return formatter.localizedString(for: self, relativeTo: Date())
     }
+}
+
+extension UINavigationController {
+  open override func viewWillLayoutSubviews() {
+    super.viewWillLayoutSubviews()
+    navigationBar.topItem?.backButtonDisplayMode = .minimal
+  }
+
 }
 
 extension String {
