@@ -40,7 +40,7 @@ struct NewMemoryView: View {
                     header
                     
                     if selection == 2 {
-                        addDesc
+                        info
                     } else {
                         CameraPreview(camera: cameraViewModel)
                             .frame(width: Constants.width, height: Constants.height)
@@ -199,31 +199,36 @@ struct NewMemoryView: View {
         .disabled(secondImage == nil)
     }
     
-    private var addDesc: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 15) {
-                Title(text: "desc", font: .title3)
-                
-                VStack {
-                    TextField("optional", text: $text)
-                        .onChange(of: text) { _ in
-                            text = String(text.prefix(Constants.DESCRIPTION_LIMIT))
-                        }
+    private var info: some View {
+        VStack(spacing: 15) {
+            //descption
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 15) {
+                    Title(text: "desc", font: .title3)
                     
-                    Rectangle()
-                        .frame(height: 1)
-                        .foregroundColor(.gray)
+                    VStack {
+                        TextField("optional", text: $text)
+                            .onChange(of: text) { _ in
+                                text = String(text.prefix(Constants.DESCRIPTION_LIMIT))
+                            }
+                        
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(.gray)
+                    }
+                    .shadow(radius: 3)
                 }
-                .shadow(radius: 3)
-            }
-            .padding(.horizontal)
-            
-            Text("\(text.count)/\(Constants.DESCRIPTION_LIMIT)")
-                .font(.system(size: 12))
-                .foregroundColor(.gray)
-                .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.horizontal)
-                .padding(.top, 5)
+                
+                Text("\(text.count)/\(Constants.DESCRIPTION_LIMIT)")
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.horizontal)
+                    .padding(.top, 5)
+            }
+            
+            //location
         }
     }
     

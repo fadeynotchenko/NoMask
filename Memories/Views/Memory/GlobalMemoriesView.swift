@@ -33,6 +33,7 @@ struct GlobalMemoriesView: View {
     
     //dialogs
     @State private var showReportDialog = false
+    @State private var showDeleteDialog = false
     
     @State private var position: CGFloat = 0
     
@@ -84,6 +85,21 @@ struct GlobalMemoriesView: View {
             } message: {
                 Text("showReportDialog")
             }
+            .confirmationDialog("", isPresented: $showDeleteDialog) {
+                Button(role: .destructive) {
+                    if let currentMemory = currentMemory {
+                        Firestore.firestore().collection("Global Memories").document(currentMemory.memoryID).delete { _ in }
+                        
+                        withAnimation {
+                            memoryViewModel.globalMemories = memoryViewModel.globalMemories.filter { $0.memoryID != currentMemory.memoryID }
+                        }
+                    }
+                } label: {
+                    Text("delete")
+                }
+            } message: {
+                Text("delete_dialog")
+            }
             .onAppear {
                 memoryViewModel.fetchSelfData()
                 
@@ -97,7 +113,7 @@ struct GlobalMemoriesView: View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 ForEach(globalMemories) { memory in
-                    MemoryCardView(showReportDialog: $showReportDialog, currentMemory: $currentMemory, memory: memory)
+                    MemoryCardView(showReportDialog: $showReportDialog, showDeleteDialog: $showDeleteDialog, currentMemory: $currentMemory, memory: memory)
                 }
             }
             .offset(y: 70)

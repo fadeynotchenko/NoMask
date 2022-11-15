@@ -26,7 +26,7 @@ struct PersonalMemoriesView: View {
             ScrollView {
                 LazyVStack(spacing: 20) {
                     ForEach(memoryViewModel.personalMemories) { memory in
-                        MemoryCardView(showReportDialog: .constant(false), currentMemory: .constant(nil), memory: memory)
+                        MemoryCardView(showReportDialog: .constant(false), showDeleteDialog: .constant(false), currentMemory: .constant(nil), memory: memory)
                     }
                 }
                 .padding(.bottom, 70)

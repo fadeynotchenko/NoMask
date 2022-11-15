@@ -36,3 +36,8 @@
 "my" = "My posts";
 "delete" = "Delete";
 "settings" = "Settings";
+"logout_dialog" = "Are you sure you want to log out of your account?";
+"logout_yes" = "Yes, log out";
+"delete_dialog" = "Are you sure you want to delete your account? It will be impossible to restore your account";
+"delete_yes" = "Yes, delete";
+"delete_post_dialog" = "Are you sure you want to delete the post?";

@@ -14,6 +14,7 @@ import FirebaseFirestore
 struct MemoryCardView: View {
     
     @Binding var showReportDialog: Bool
+    @Binding var showDeleteDialog: Bool
     @Binding var currentMemory: Memory?
     @State var memory: Memory
     
@@ -82,7 +83,9 @@ struct MemoryCardView: View {
                 .accentColor(.red)
             } else {
                 Button(role: .destructive) {
-                    deletePost()
+                    showDeleteDialog = true
+                    
+                    currentMemory = memory
                 } label: {
                     Label("delete", systemImage: "trash")
                 }
@@ -119,7 +122,7 @@ struct MemoryCardView: View {
     
     @ViewBuilder
     private var topView: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 if let url = memory.userImage, !url.absoluteString.isEmpty {
                     Avatar(avatarType: .url(url), size: CGSize(width: 40, height: 40), downloadImage: true)
