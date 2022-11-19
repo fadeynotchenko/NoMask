@@ -13,7 +13,7 @@ struct ImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?
     @Binding var dismiss: Bool
     
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @EnvironmentObject private var memoryViewModel: ViewModel
     
     func makeCoordinator() -> Coordinator {
         ImagePicker.Coordinator(parent1: self)
@@ -53,7 +53,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             let manager = PHImageManager.default()
             
             fetchResult.enumerateObjects { obj, i, _ in
-                let size = CGSize(width: 300, height: 300)
+                let size = CGSize(width: 1200, height: 1200)
                 
                 let option = PHImageRequestOptions()
                 option.isSynchronous = true

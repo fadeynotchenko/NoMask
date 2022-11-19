@@ -45,6 +45,41 @@ struct TextButton: View {
     }
 }
 
+struct GeoButton: View {
+    var title: String
+    var systemImage: String
+    var id: Int
+    @Binding var geoSelection: Int
+    var action: () -> ()
+    
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            Label {
+                Text(title)
+                    .bold()
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+            } icon: {
+                Image(systemName: systemImage)
+            }
+            .font(.subheadline)
+            .padding()
+            .background(.ultraThickMaterial)
+            .cornerRadius(15)
+            .shadow(radius: 3)
+            .overlay {
+                if geoSelection == id {
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(.white, lineWidth: 2)
+                        .shadow(radius: 3)
+                }
+            }
+        }
+    }
+}
+
 struct ImageButton: View {
     var systemName: String
     var color: Color
@@ -68,8 +103,25 @@ struct ImageButton: View {
     }
 }
 
-struct Avatar: View {
+struct ImageLabel: View {
+    var systemName: String
+    var color: Color
+    var size: CGFloat?
     
+    var body: some View {
+        Image(systemName: systemName)
+            .resizable()
+            .scaledToFit()
+            .padding(10)
+            .frame(width: size != nil ? size! : 35, height: size != nil ? size! : 35)
+            .foregroundColor(color)
+            .background(.ultraThickMaterial)
+            .clipShape(Circle())
+            .shadow(radius: 3)
+    }
+}
+
+struct Avatar: View {
     let avatarType: AvatarImageType
     let size: CGSize
     var downloadImage: Bool
@@ -101,13 +153,13 @@ struct Avatar: View {
                 .clipShape(Circle())
                 .shadow(radius: 3)
         case .empty:
-            Image(systemName: "questionmark")
+            Image(systemName: "camera")
                 .resizable()
                 .scaledToFit()
                 .scaleEffect(0.6)
                 .foregroundColor(.gray)
                 .frame(width: size.width, height: size.height)
-                .background(Color("Background"))
+                .background(.ultraThickMaterial)
                 .clipShape(Circle())
                 .shadow(radius: 3)
         }
@@ -192,6 +244,8 @@ struct Download: View {
 struct NicknameTF: View {
     @Binding var nickname: String
     
+    @FocusState private var state
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             Title(text: "nickname", font: .headline)
@@ -200,7 +254,7 @@ struct NicknameTF: View {
                 TextField("nickname", text: $nickname)
                     .onChange(of: nickname) { _ in
                         nickname = String(nickname.prefix(Constants.NICKNAME_LIMIT))
-                        }
+                    }
                 
                 Rectangle()
                     .frame(height: 1)

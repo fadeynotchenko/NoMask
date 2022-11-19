@@ -13,20 +13,19 @@ import AlertToast
 import FirebaseFirestore
 import FirebaseAuth
 import WidgetKit
+import BottomSheet
 
 struct GlobalMemoriesView: View {
     
-    @State private var searchText = ""
-    
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @EnvironmentObject private var memoryViewModel: ViewModel
+    @EnvironmentObject private var cameraViewModel: CameraViewModel
     
     //views
-    @State private var showNewMemoryView = false
-    @State private var showProfileView = false
     @State private var showBannedView = false
-    @State private var showNickNameView = false
+    @State private var showNewPostView = false
+    @State private var showProfileView = false
     
-    @State private var currentMemory: Memory?
+    @State private var currentMemory: Post?
     
     //toasts
     @State private var reportSent = false
@@ -34,12 +33,11 @@ struct GlobalMemoriesView: View {
     //dialogs
     @State private var showReportDialog = false
     @State private var showDeleteDialog = false
+    @State private var showBanUserDialog = false
     
-    @State private var position: CGFloat = 0
-    
-    private var globalMemories: [Memory] {
+    private var globalMemories: [Post] {
         let set = Set(memoryViewModel.ignorePosts)
-        let set2 = Set(memoryViewModel.globalMemories)
+        let set2 = Set(memoryViewModel.globalPosts)
         
         let arr = set2.filter { !set.contains($0.userID) }.sorted { $0.date > $1.date }
         
@@ -47,7 +45,6 @@ struct GlobalMemoriesView: View {
     }
     
     var body: some View {
-        NavigationView {
             ZStack {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
@@ -58,20 +55,27 @@ struct GlobalMemoriesView: View {
                 
                 global
             }
+            .accentColor(.white)
             .overlay(alignment: .top) {
-                header
-            }
-            .fullScreenCover(isPresented: $showNewMemoryView) {
-                NewMemoryView(dismiss: $showNewMemoryView)
-            }
-            .fullScreenCover(isPresented: $showProfileView) {
-                ProfileView(dismiss: $showProfileView)
+                ZStack(alignment: .top) {
+                    LinearGradient(colors: [.clear, .black.opacity(0.8)], startPoint: .bottom, endPoint: .top)
+                        .edgesIgnoringSafeArea(.all)
+                    
+                    header
+                }
+                .frame(height: 100)
             }
             .fullScreenCover(isPresented: $memoryViewModel.userIsBannded) {
                 BannedView()
             }
-            .fullScreenCover(isPresented: $showNickNameView) {
-                NicknameView(dismiss: $showNickNameView, showNewMemoryView: $showNewMemoryView)
+            .bottomSheet(isPresented: $showProfileView, detents: [.large()]) {
+                ProfileView()
+                    .environmentObject(memoryViewModel)
+            }
+            .bottomSheet(isPresented: $showNewPostView, detents: [.large()]) {
+                NewPostView()
+                    .environmentObject(memoryViewModel)
+                    .environmentObject(cameraViewModel)
             }
             .toast(isPresenting: $reportSent) {
                 AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: NSLocalizedString("reportSent", comment: ""))
@@ -91,21 +95,24 @@ struct GlobalMemoriesView: View {
                         Firestore.firestore().collection("Global Memories").document(currentMemory.memoryID).delete { _ in }
                         
                         withAnimation {
-                            memoryViewModel.globalMemories = memoryViewModel.globalMemories.filter { $0.memoryID != currentMemory.memoryID }
+                            memoryViewModel.globalPosts = memoryViewModel.globalPosts.filter { $0.memoryID != currentMemory.memoryID }
                         }
                     }
                 } label: {
                     Text("delete")
                 }
             } message: {
-                Text("delete_dialog")
+                Text("delete_post_dialog")
             }
-            .onAppear {
-                memoryViewModel.fetchSelfData()
-                
-                memoryViewModel.fetchAdmins()
+            .confirmationDialog("", isPresented: $showBanUserDialog) {
+                Button(role: .destructive) {
+                    banUser()
+                } label: {
+                    Text("ban_yes")
+                }
+            } message: {
+                Text("ban_dialog")
             }
-        }
     }
     
     @ViewBuilder
@@ -113,13 +120,13 @@ struct GlobalMemoriesView: View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 ForEach(globalMemories) { memory in
-                    MemoryCardView(showReportDialog: $showReportDialog, showDeleteDialog: $showDeleteDialog, currentMemory: $currentMemory, memory: memory)
+                    MemoryCardView(showReportDialog: $showReportDialog, showDeleteDialog: $showDeleteDialog, showBanUserDialog: $showBanUserDialog, currentMemory: $currentMemory, memory: memory, isPersonal: false)
                 }
             }
             .offset(y: 70)
             .padding(.bottom, 70)
             
-            if memoryViewModel.loadGlobalMemoriesStatus == .finish {
+            if memoryViewModel.loadGlobalMemoriesStatus == .finish, let document = memoryViewModel.last, document.documentID != Constants.LAST_POST_ID {
                 fetchNextButton
             }
         }
@@ -131,11 +138,7 @@ struct GlobalMemoriesView: View {
     private var header: some View {
         HStack {
             ImageButton(systemName: "plus", color: .white) {
-                if memoryViewModel.userNickname.isEmpty {
-                    showNickNameView = true
-                } else {
-                    showNewMemoryView = true
-                }
+                showNewPostView.toggle()
             }
             
             Spacer()
@@ -153,8 +156,9 @@ struct GlobalMemoriesView: View {
             Spacer()
             
             ImageButton(systemName: "person.fill", color: .white) {
-                showProfileView = true
+                showProfileView.toggle()
             }
+            
         }
         .frame(maxWidth: Constants.width - 20, alignment: .center)
         
@@ -185,6 +189,15 @@ extension GlobalMemoriesView {
                     .foregroundColor(.gray)
             }
         }
+    }
+    
+    private func banUser() {
+        guard let id = Auth.auth().currentUser?.uid else { return }
+        guard let currentMemory = currentMemory else { return }
+        
+        memoryViewModel.ignorePosts.append(currentMemory.userID)
+        
+        Firestore.firestore().collection("User Data").document(id).updateData(["ignore": memoryViewModel.ignorePosts])
     }
 }
 

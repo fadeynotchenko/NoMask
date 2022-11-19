@@ -15,22 +15,34 @@ struct MemoryCardView: View {
     
     @Binding var showReportDialog: Bool
     @Binding var showDeleteDialog: Bool
-    @Binding var currentMemory: Memory?
-    @State var memory: Memory
+    @Binding var showBanUserDialog: Bool
+    @Binding var currentMemory: Post?
+    @State var memory: Post
+    var isPersonal: Bool
     
     @State private var selection = 0
     
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @State private var isGet = false
+    
+    @EnvironmentObject private var memoryViewModel: ViewModel
+    
+    private var userID: String? {
+        Auth.auth().currentUser?.uid
+    }
     
     var body: some View {
         VStack(spacing: 0) {
-            topView
+            if isPersonal {
+                personalTopView
+            } else {
+                topView
+            }
             
             TabView(selection: $selection) {
                 ForEach(0..<memory.images.count, id: \.self) { i in
                     if let url = memory.images[i] {
                         VStack(spacing: 0) {
-                            ImageItem(url: url, size: CGSize(width: Constants.width, height: Constants.height), loadDisk: true)
+                            ImageItem(url: url, size: CGSize(width: Constants.width, height: Constants.height), loadDisk: memory.userID == userID)
                                 .onTapGesture {
                                     withAnimation {
                                         selection = selection == 0 ? 1 : 0
@@ -43,20 +55,21 @@ struct MemoryCardView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: memory.images.count == 1 ? .never : .always))
             .frame(width: Constants.width, height: Constants.height)
+            .onAppear {
+                memoryViewModel.fetchUserData(userID: memory.userID) { url, nickname in
+                    withAnimation {
+                        memory.userImage = url
+                        memory.userNickname = nickname
+                    }
+                }
+            }
         }
         .background(.ultraThickMaterial)
         .cornerRadius(15)
         .shadow(radius: 3)
-        .onAppear {
-            memoryViewModel.fetchUserData(userID: memory.userID) { url, nickname in
-                withAnimation {
-                    memory.userImage = url
-                    memory.userNickname = nickname
-                }
-            }
-        }
     }
     
+    @ViewBuilder
     private var menuButton: some View {
         Menu {
             Button {
@@ -76,7 +89,9 @@ struct MemoryCardView: View {
                 .accentColor(.red)
                 
                 Button(role: .destructive) {
-                    hidePost()
+                    showBanUserDialog = true
+                    
+                    currentMemory = memory
                 } label: {
                     Label("ban", systemImage: "person.badge.minus")
                 }
@@ -171,6 +186,52 @@ struct MemoryCardView: View {
         .background(.ultraThickMaterial)
         .cornerRadius(15, corners: [.topLeft, .topRight])
     }
+    
+    @ViewBuilder
+    private var personalTopView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                if let url = memoryViewModel.userAvatar {
+                    Avatar(avatarType: .url(url), size: CGSize(width: 40, height: 40), downloadImage: true)
+                        .padding(.leading)
+                }
+                
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 5) {
+                        Title(text: "\(memoryViewModel.userNickname)", font: .system(size: 15))
+                        
+                        if memoryViewModel.admins.contains(memory.userID) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(.linearGradient(colors: [.orange, .purple], startPoint: .topTrailing, endPoint: .bottomLeading))
+                        }
+                    }
+                    
+                    Text(memory.date.timeAgoDisplay())
+                        .bold()
+                        .font(.system(size: 13))
+                        .foregroundColor(.gray)
+                        .padding(.trailing)
+                }
+                
+                Spacer()
+                
+                menuButton
+            }
+            
+            if let desc = memory.descText {
+                Text(desc)
+                    .multilineTextAlignment(.leading)
+                    .foregroundColor(.gray)
+                    .font(.system(size: 14))
+                    .padding(.horizontal)
+            }
+        }
+        .padding(.vertical)
+        .frame(maxWidth: Constants.width)
+        .background(.ultraThickMaterial)
+        .cornerRadius(15, corners: [.topLeft, .topRight])
+    }
 }
 
 extension MemoryCardView {
@@ -190,14 +251,6 @@ extension MemoryCardView {
     
     private func banUser() {
         Firestore.firestore().collection("User Data").document(memory.userID).updateData(["banned": true])
-    }
-    
-    private func hidePost() {
-        guard let id = Auth.auth().currentUser?.uid else { return }
-        
-        memoryViewModel.ignorePosts.append(memory.userID)
-        
-        Firestore.firestore().collection("User Data").document(id).updateData(["ignore": memoryViewModel.ignorePosts])
     }
 }
 

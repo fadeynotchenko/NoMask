@@ -11,9 +11,7 @@ import FirebaseFirestore
 
 struct NicknameView: View {
     
-    @Binding var dismiss: Bool
-    @Binding var showNewMemoryView: Bool
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @EnvironmentObject private var memoryViewModel: ViewModel
     
     @State private var nickname = ""
     
@@ -37,25 +35,13 @@ struct NicknameView: View {
                         
                         Firestore.firestore().collection("User Data").document(id).setData(["nickname": nickname])
                         
-                        dismiss.toggle()
                         
-                        showNewMemoryView = true
                     }
                     .disabled(nickname.isEmpty)
                 }
                 .ignoresSafeArea(.keyboard, edges: .all)
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem {
-                    Button {
-                        dismiss.toggle()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundColor(.white)
-                    }
-                }
-            }
         }
     }
 }

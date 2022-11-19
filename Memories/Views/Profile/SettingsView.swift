@@ -12,7 +12,7 @@ struct SettingsView: View {
     
     @State private var clearned = false
     
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @EnvironmentObject private var memoryViewModel: ViewModel
     
     private var cache = ImageCache.default
     

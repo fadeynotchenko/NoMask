@@ -11,12 +11,13 @@ import FirebaseStorage
 import FirebaseFirestore
 import FirebaseAuth
 import AVKit
+import Kingfisher
 
-class MemoryViewModel: ObservableObject {
+class ViewModel: ObservableObject {
     
     //global data
-    @Published var globalMemories = [Memory]()
-    @Published var personalMemories = [Memory]()
+    @Published var globalPosts = [Post]()
+    @Published var personalMemories = [Post]()
     
     //admin
     @Published var admins = [String]()
@@ -36,28 +37,44 @@ class MemoryViewModel: ObservableObject {
     @Published var limit = Constants.FETCH_LIMIT
     @Published var last: QueryDocumentSnapshot?
     
+    @Published var showProfileView = false
+    
     func fetchGlobalMemories() {
         self.loadGlobalMemoriesStatus = .start
         
         Firestore.firestore().collection("Global Memories").order(by: "date", descending: true).limit(to: limit).getDocuments { snapshots, error in
             if let documents = snapshots?.documents, error == nil {
-                self.globalMemories = documents.map { snapshot -> Memory in
+                
+//                for document in documents {
+//                    let data = document.data()
+//
+//                    let date = (data["date"] as! Timestamp).dateValue()
+//                    let images = (data["images"] as! [String]).map { URL(string: $0)! }
+//                    let userID = data["userID"] as! String
+//                    let descText = data["desc"] as? String
+//
+//                    self.fetchUserData(userID: userID) { image, name in
+//                        self.globalMemories.append(Post(memoryID: document.documentID, userID: userID, userNickname: name, userImage: image, descText: descText, date: date, images: images))
+//                    }
+//                }
+                
+                self.globalPosts = documents.map { snapshot -> Post in
                     let data = snapshot.data()
-                    
+
                     let date = (data["date"] as! Timestamp).dateValue()
                     let images = (data["images"] as! [String]).map { URL(string: $0)! }
                     let userID = data["userID"] as! String
                     let descText = data["desc"] as? String
-                    
-                    return Memory(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
+
+                    return Post(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
                 }
                 
                 if let last = documents.last {
                     self.last = last
                 }
-                
-                self.loadGlobalMemoriesStatus = .finish
             }
+            
+            self.loadGlobalMemoriesStatus = .finish
         }
     }
     
@@ -65,7 +82,7 @@ class MemoryViewModel: ObservableObject {
         if let last = last {
             Firestore.firestore().collection("Global Memories").order(by: "date", descending: true).limit(to: limit).start(atDocument: last).getDocuments { snapshots, error in
                 if let documents = snapshots?.documents, error == nil {
-                    let arr = documents.map { snapshot -> Memory in
+                    let arr = documents.map { snapshot -> Post in
                         let data = snapshot.data()
                         
                         let date = (data["date"] as! Timestamp).dateValue()
@@ -73,11 +90,11 @@ class MemoryViewModel: ObservableObject {
                         let userID = data["userID"] as! String
                         let descText = data["desc"] as? String
                         
-                        return Memory(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
+                        return Post(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
                     }
                     
-                    self.globalMemories.removeLast()
-                    self.globalMemories.append(contentsOf: arr)
+                    self.globalPosts.removeLast()
+                    self.globalPosts.append(contentsOf: arr)
                     
                     if let last = documents.last {
                         self.last = last
@@ -95,7 +112,7 @@ class MemoryViewModel: ObservableObject {
         Firestore.firestore().collection("Global Memories").whereField("userID", isEqualTo: id).order(by: "date", descending: true).getDocuments { snapshots, error in
             if let documents = snapshots?.documents, error == nil {
                 print(documents)
-                self.personalMemories = documents.map { snapshot -> Memory in
+                self.personalMemories = documents.map { snapshot -> Post in
                     let data = snapshot.data()
                     
                     let date = (data["date"] as! Timestamp).dateValue()
@@ -103,11 +120,11 @@ class MemoryViewModel: ObservableObject {
                     let userID = data["userID"] as! String
                     let descText = data["desc"] as? String
                     
-                    return Memory(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
+                    return Post(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
                 }
-                
-                self.loadMyMemoriesStatus = .finish
             }
+            
+            self.loadMyMemoriesStatus = .finish
         }
     }
     

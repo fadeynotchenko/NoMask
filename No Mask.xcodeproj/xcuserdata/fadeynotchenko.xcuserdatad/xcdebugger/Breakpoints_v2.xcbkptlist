@@ -126,8 +126,8 @@
             filePath = "Memories/Views/Memory/NewMemoryView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "267"
-            endingLineNumber = "267"
+            startingLineNumber = "256"
+            endingLineNumber = "256"
             landmarkName = "uploadToFirebase(_:)"
             landmarkType = "7">
             <Locations>
@@ -174,8 +174,8 @@
             filePath = "Memories/View Models/MemoryViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "44"
-            endingLineNumber = "44"
+            startingLineNumber = "61"
+            endingLineNumber = "61"
             landmarkName = "fetchGlobalMemories()"
             landmarkType = "7">
          </BreakpointContent>
@@ -190,8 +190,8 @@
             filePath = "Memories/Views/Memory/NewMemoryView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "244"
-            endingLineNumber = "244"
+            startingLineNumber = "231"
+            endingLineNumber = "231"
             landmarkName = "uploadButton"
             landmarkType = "24">
          </BreakpointContent>
@@ -200,48 +200,80 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Memories/View Models/MemoryViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "96"
-            endingLineNumber = "96"
+            startingLineNumber = "113"
+            endingLineNumber = "113"
             landmarkName = "fetchPersonalMemories()"
             landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A - 7f1fd69769c0dcf8"
+                  uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A - 2961065a39a7c488"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "closure #1 (Swift.Optional&lt;__C.FIRQuerySnapshot&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in No_Mask.MemoryViewModel.fetchPersonalMemories() -&gt; ()"
                   moduleName = "No Mask"
                   usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/fadeynotchenko/Documents/Memories-AppStore-/Memories/View%20Models/MemoryViewModel.swift"
+                  urlString = "file:///Users/fadeynotchenko/Documents/No-Mask/Memories/View%20Models/MemoryViewModel.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "94"
-                  endingLineNumber = "94"
-                  offsetFromSymbolStart = "68">
+                  startingLineNumber = "97"
+                  endingLineNumber = "97"
+                  offsetFromSymbolStart = "84">
                </Location>
                <Location
-                  uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A - 7f1fd69769c0dcf8"
+                  uuid = "59D7E092-3A39-4984-ADCB-BAED3BA53D4A - 2961065a39a7c488"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "closure #1 (Swift.Optional&lt;__C.FIRQuerySnapshot&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in No_Mask.MemoryViewModel.fetchPersonalMemories() -&gt; ()"
                   moduleName = "No Mask"
                   usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/fadeynotchenko/Documents/Memories-AppStore-/Memories/View%20Models/MemoryViewModel.swift"
+                  urlString = "file:///Users/fadeynotchenko/Documents/No-Mask/Memories/View%20Models/MemoryViewModel.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "94"
-                  endingLineNumber = "94"
-                  offsetFromSymbolStart = "224">
+                  startingLineNumber = "97"
+                  endingLineNumber = "97"
+                  offsetFromSymbolStart = "240">
                </Location>
             </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2AE6E675-6999-4EFC-BB20-4A63DA64A6C5"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Memories/Views/Profile/EditProfileView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "62"
+            endingLineNumber = "62"
+            landmarkName = "body"
+            landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "873140A3-66C9-4CD1-BFC7-1728058DF949"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Memories/MemoriesApp.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "30"
+            endingLineNumber = "30"
+            landmarkName = "body"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

@@ -10,7 +10,7 @@ import AuthenticationServices
 
 struct LoginView: View {
     
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @EnvironmentObject private var memoryViewModel: ViewModel
     @EnvironmentObject private var loginViewModel: LoginViewModel
     
     var body: some View {

@@ -13,6 +13,8 @@ import FirebaseAuth
 
 struct EditProfileView: View {
     
+    var isEntry: Bool
+    
     @State private var nickname = ""
     @State private var photo: UIImage?
     
@@ -22,14 +24,19 @@ struct EditProfileView: View {
     
     @State private var showPickerView = false
     
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @EnvironmentObject private var memoryViewModel: ViewModel
     
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         ZStack {
+            Color("Background").edgesIgnoringSafeArea(.all)
             
             VStack(spacing: 15) {
+                if isEntry {
+                    textView
+                }
+                
                 Button {
                     showPickerView = true
                 } label: {
@@ -51,14 +58,14 @@ struct EditProfileView: View {
                 saveButton
             }
             .ignoresSafeArea(.keyboard, edges: .all)
+            .onAppear {
+                nickname = memoryViewModel.userNickname
+                
+                checkStatus()
+            }
         }
         .navigationTitle(Text("editprofile"))
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            nickname = memoryViewModel.userNickname
-            
-            checkStatus()
-        }
         .overlay {
             if error {
                 Permission(text: "photopermission")
@@ -71,11 +78,24 @@ struct EditProfileView: View {
         .sheet(isPresented: $showPickerView) {
             ImagePicker(image: $photo, dismiss: $showPickerView)
         }
-        .background(.ultraThickMaterial)
+    }
+    
+    private var textView: some View {
+        VStack(alignment: .center, spacing: 10) {
+            Title(text: "profile", font: .headline)
+            
+            Text("profilenext")
+                .bold()
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.horizontal)
     }
     
     private var saveButton: some View {
-        TextButton(text: "save", size: 330, color: nickname.isEmpty ? .gray : .blue) {
+        TextButton(text: "save", size: 330, color: nickname.isEmpty || (photo == nil && memoryViewModel.userAvatar == nil) ? .gray : .blue) {
             guard let id = Auth.auth().currentUser?.uid else { return }
             
             withAnimation {
@@ -95,11 +115,17 @@ struct EditProfileView: View {
 //                                Firestore.firestore().document(memoryViewModel.userNickname).delete { _ in }
 //                            }
                             
-                            Firestore.firestore().collection("User Data").document(id).updateData(["nickname": nickname, "image": url])
+                            Firestore.firestore().collection("User Data").document(id).setData(["nickname": nickname, "image": url])
                             
                             memoryViewModel.fetchGlobalMemories()
                             
-                            dismiss()
+                            if isEntry {
+                                withAnimation {
+                                    UserDefaults.standard.set(true, forKey: "isProfile")
+                                }
+                            } else {
+                                dismiss()
+                            }
                         }
                     }
                 } else {
@@ -107,15 +133,21 @@ struct EditProfileView: View {
 //                        Firestore.firestore().document(memoryViewModel.userNickname).delete { _ in }
 //                    }
                     
-                    Firestore.firestore().collection("User Data").document(id).updateData(["nickname": nickname])
+                    Firestore.firestore().collection("User Data").document(id).setData(["nickname": nickname])
                     
                     memoryViewModel.fetchGlobalMemories()
                     
-                    dismiss()
+                    if isEntry {
+                        withAnimation {
+                            UserDefaults.standard.set(true, forKey: "isProfile")
+                        }
+                    } else {
+                        dismiss()
+                    }
                 }
             }
         }
-        .disabled(nickname.isEmpty)
+        .disabled(nickname.isEmpty || (photo == nil && memoryViewModel.userAvatar == nil))
     }
 }
 

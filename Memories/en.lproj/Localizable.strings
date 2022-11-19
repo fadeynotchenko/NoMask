@@ -41,3 +41,9 @@
 "delete_dialog" = "Are you sure you want to delete your account? It will be impossible to restore your account";
 "delete_yes" = "Yes, delete";
 "delete_post_dialog" = "Are you sure you want to delete the post?";
+"edit" = "Edit";
+"profilenext" = "Fill in your profile details to continue";
+"done" = "Done";
+"ban_dialog" = "Are you sure you want to ban this user? You won't see this user";
+"ban_yes" = "Yes, ban";
+"info" = "Additional information";

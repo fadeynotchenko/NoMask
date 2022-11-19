@@ -12,78 +12,52 @@ import Kingfisher
 
 struct ProfileView: View {
     
-    @Binding var dismiss: Bool
-    
     //dialogs
     @State private var showLogoutDialog = false
     @State private var showDeleteAccDialog = false
     
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
+    @EnvironmentObject private var viewModel: ViewModel
+    
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        GeometryReader { reader in
-            NavigationView {
+        NavigationView {
+            GeometryReader { reader in
                 ZStack {
                     Color("Background").edgesIgnoringSafeArea(.all)
                     
-//                    ScrollView {
-//                        TopView(reader: reader)
-//                            .edgesIgnoringSafeArea(.all)
-//
-//                        VStack(spacing: 15) {
-//                            Title(text: "Публикации")
-//
-//                            ZStack {
-//                                if memoryViewModel.loadMyMemoriesStatus == .start {
-//                                    ProgressView()
-//                                        .shadow(radius: 3)
-//                                } else if memoryViewModel.personalMemories.isEmpty {
-//                                    Text("empry")
-//                                        .foregroundColor(.gray)
-//                                }
-//
-//                                ScrollView(.horizontal, showsIndicators: false) {
-//                                    LazyHStack(spacing: 20) {
-//                                        ForEach(memoryViewModel.personalMemories) { memory in
-//                                            MemoryCardView(showReportDialog: .constant(false), showDeleteDialog: .constant(false), currentMemory: .constant(nil), memory: memory)
-//                                        }
-//                                    }
-//                                }
-//                                .onAppear {
-//                                    memoryViewModel.fetchPersonalMemories()
-                    //                                }
-                    //                            }
-                    //                        }
-                    //                    }
-                    
-                    VStack(spacing: 15) {
-                        NavigationLink {
-                            EditProfileView()
-                        } label: {
-                            profileSection
+                    ScrollView {
+                        VStack(spacing: 15) {
+                            TopView(reader: reader)
+                            
+                            NavigationLink {
+                                EditProfileView(isEntry: false)
+                            } label: {
+                                editSection
+                            }
+                            
+                            //                            NavigationLink {
+                            //                                SettingsView()
+                            //                            } label: {
+                            //                                settingSection
+                            //                            }
+                            
+                                                    PersonalMemoriesView()
+                            
+                            //                            logoutButton
+                            //                                .padding(.top, reader.size.width / 3.5)
+                            //
+                            //                            deleteButton
                         }
-                        
-                        NavigationLink {
-                            PersonalMemoriesView()
-                        } label: {
-                            personalSection
-                        }
-                        
-                        NavigationLink {
-                            SettingsView()
-                        } label: {
-                            settingSection
-                        }
-                        
-                        Spacer()
-                        
-                        logoutButton
-                        
-                        deleteButton
                     }
                 }
-                .navigationTitle(Text("profile"))
-                .navigationBarTitleDisplayMode(.inline)
+                .navigationBarHidden(true)
+                .onAppear {
+                    viewModel.fetchSelfData()
+                    
+                    viewModel.fetchAdmins()
+                }
+                .navigationBarHidden(true)
                 .confirmationDialog("", isPresented: $showLogoutDialog) {
                     Button(role: .destructive) {
                         withAnimation {
@@ -91,6 +65,9 @@ struct ProfileView: View {
                                 try Auth.auth().signOut()
                                 
                                 UserDefaults.standard.set(false, forKey: "isLoggin")
+                                UserDefaults.standard.set(false, forKey: "isProfile")
+                                
+                                dismiss()
                             } catch {
                                 print(error.localizedDescription)
                             }
@@ -111,6 +88,9 @@ struct ProfileView: View {
                                     print(error.localizedDescription)
                                 } else {
                                     UserDefaults.standard.set(false, forKey: "isLoggin")
+                                    UserDefaults.standard.set(false, forKey: "isProfile")
+                                    
+                                    dismiss()
                                 }
                             }
                         }
@@ -120,35 +100,31 @@ struct ProfileView: View {
                 } message: {
                     Text("delete_dialog")
                 }
-                .toolbar {
-                    ToolbarItem {
-                        Button {
-                            dismiss.toggle()
-                        } label: {
-                            Image(systemName: "xmark")
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
                 .overlay(alignment: .topTrailing) {
-                    NavigationLink {
-                        EditProfileView()
+                    Menu {
+                        Button(role: .destructive) {
+                            showLogoutDialog = true
+                        } label: {
+                            Text("logout")
+                        }
+                        
+                        Button(role: .destructive) {
+                            showDeleteAccDialog = true
+                        } label: {
+                            Text("deleteacc")
+                        }
                     } label: {
-                        Image(systemName: "square.and.pencil")
-                            .resizable()
-                            .scaledToFit()
-                            .padding(10)
-                            .frame(width: 35, height: 35)
-                            .foregroundColor(.white)
-                            .background(.ultraThickMaterial)
-                            .clipShape(Circle())
-                            .shadow(radius: 3)
+                        ImageButton(systemName: "ellipsis", color: .white) { }
+                            .padding()
                     }
                 }
                 .overlay(alignment: .topLeading) {
                     ImageButton(systemName: "xmark", color: .white) {
-                        dismiss.toggle()
+                        withAnimation {
+                            dismiss()
+                        }
                     }
+                    .padding()
                 }
             }
         }
@@ -156,49 +132,43 @@ struct ProfileView: View {
     
     @ViewBuilder
     private func TopView(reader: GeometryProxy) -> some View {
-        VStack(alignment: .leading, spacing: 15) {
-            TopImage(imageType: .url(memoryViewModel.userAvatar!), reader: reader)
+        GeometryReader { proxy in
+            let minY = proxy.frame(in: .named("SCROLL")).minY
+            let size = proxy.size
+            let height = (size.height + minY)
             
-            Title(text: "\(memoryViewModel.userNickname)")
-                .padding(.horizontal)
-        }
-    }
-    
-    @ViewBuilder
-    private func TopImage(imageType: AvatarImageType, reader: GeometryProxy) -> some View {
-        switch imageType {
-        case .url(let url):
-            KFImage(url)
-                .loadDiskFileSynchronously(true)
-                .resizable()
-                .placeholder {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: reader.size.height / 2)
-                        .background(Color("Background"))
-                        .shadow(radius: 3)
-                }
-                .frame(maxWidth: .infinity, maxHeight: reader.size.height / 2)
-                .scaledToFill()
-                .background(Color("Background"))
-                .shadow(radius: 3)
-                
-        case .image(_):
-            EmptyView()
-            
-        case .empty:
-            EmptyView()
-        }
-    }
-    
-    private var profileSection: some View {
-        HStack(spacing: 15) {
-            if let url = memoryViewModel.userAvatar {
-                Avatar(avatarType: .url(url), size: CGSize(width: 60, height: 60), downloadImage: true)
-            } else {
-                Avatar(avatarType: .empty, size: CGSize(width: 60, height: 60), downloadImage: false)
+            if let imageURL = viewModel.userAvatar {
+                KFImage(imageURL)
+                    .resizable()
+                    .placeholder {
+                        ProgressView()
+                    }
+                    .scaledToFill()
+                    .background(.ultraThickMaterial)
+                    .frame(width: size.width, height: max(height, 0), alignment: .top)
+                    .overlay {
+                        ZStack(alignment: .bottom) {
+                            LinearGradient(colors: [.clear, .black.opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                        }
+                        
+                        Title(text: "\(viewModel.userNickname)")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                            .padding()
+                    }
+                    .cornerRadius(15)
+                    .offset(y: -minY)
             }
+        }
+        .frame(height: reader.size.height / 2)
+    }
+    
+    private var editSection: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "square.and.pencil")
+                .font(.title2)
+                .foregroundColor(.white)
             
-            Title(text: memoryViewModel.userNickname.isEmpty ? "nickname" : "\(memoryViewModel.userNickname)", font: .headline)
+            Title(text: "edit", font: .headline)
             
             Spacer()
             
@@ -250,18 +220,6 @@ struct ProfileView: View {
         .background(.ultraThickMaterial)
         .cornerRadius(15)
         .shadow(radius: 3)
-    }
-    
-    private var logoutButton: some View {
-        TextButton(text: "logout", size: 330, color: .red) {
-            showLogoutDialog = true
-        }
-    }
-    
-    private var deleteButton: some View {
-        TextButton(text: "deleteacc", size: 330, color: .red) {
-            showDeleteAccDialog = true
-        }
     }
 }
 

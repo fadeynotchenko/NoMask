@@ -11,12 +11,10 @@ import Firebase
 import FirebaseStorage
 import FirebaseFirestore
 
-struct NewMemoryView: View {
+struct NewPostView: View {
     
-    @Binding var dismiss: Bool
-    
-    @EnvironmentObject private var memoryViewModel: MemoryViewModel
-    @StateObject private var cameraViewModel = CameraViewModel()
+    @EnvironmentObject private var memoryViewModel: ViewModel
+    @EnvironmentObject private var cameraViewModel: CameraViewModel
     
     @State private var images = [UIImage]()
     
@@ -30,9 +28,12 @@ struct NewMemoryView: View {
     
     @State private var text = ""
     
+    @State private var geoSelection = 0
+    
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         NavigationView {
-            
             ZStack {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
@@ -42,17 +43,7 @@ struct NewMemoryView: View {
                     if selection == 2 {
                         info
                     } else {
-                        CameraPreview(camera: cameraViewModel)
-                            .frame(width: Constants.width, height: Constants.height)
-                            .cornerRadius(15)
-                            .shadow(radius: 3)
-                            .overlay {
-                                if let image = firstImage, selection == 0 {
-                                    picture(image)
-                                } else if let image = secondImage, selection == 1 {
-                                    picture(image)
-                                }
-                            }
+                        camera
                         
                         takePhotoButton
                     }
@@ -71,16 +62,6 @@ struct NewMemoryView: View {
             }
             .navigationTitle(Text("new"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem {
-                    Button {
-                        dismiss.toggle()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundColor(.white)
-                    }
-                }
-            }
             .onAppear {
                 cameraViewModel.checkPermission()
             }
@@ -113,10 +94,35 @@ struct NewMemoryView: View {
         }
     }
     
+    private var camera: some View {
+        ZStack {
+            ProgressView()
+                .shadow(radius: 3)
+            
+            CameraPreview()
+                .frame(width: Constants.width, height: Constants.height)
+                .cornerRadius(15)
+                .shadow(radius: 3)
+                .overlay {
+                    if let image = firstImage, selection == 0 {
+                        picture(image)
+                    } else if let image = secondImage, selection == 1 {
+                        picture(image)
+                    }
+                }
+        }
+        .background(.ultraThickMaterial)
+        .frame(width: Constants.width, height: Constants.height)
+        .cornerRadius(15)
+        .shadow(radius: 3)
+    }
+    
     @ViewBuilder
     private var header: some View {
         if selection != 2 {
             Title(text: selection == 0 ? "camera1" : "camera2", font: .subheadline)
+        } else {
+            Title(text: "info", font: .subheadline)
         }
     }
     
@@ -204,7 +210,7 @@ struct NewMemoryView: View {
             //descption
             VStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 15) {
-                    Title(text: "desc", font: .title3)
+                    Title(text: "desc", font: .headline)
                     
                     VStack {
                         TextField("optional", text: $text)
@@ -227,13 +233,30 @@ struct NewMemoryView: View {
                     .padding(.horizontal)
                     .padding(.top, 5)
             }
+            .padding(.top)
             
-            //location
+            
+            VStack(alignment: .leading, spacing: 15) {
+                Title(text: "Геолокация", font: .headline)
+                
+                HStack {
+                    //location
+                    GeoButton(title: "Без геолокации", systemImage: "location.slash", id: 0, geoSelection: $geoSelection) {
+                        geoSelection = 0
+                    }
+
+                    GeoButton(title: "Добавить геолокацию", systemImage: "location", id: 1, geoSelection: $geoSelection) {
+                        geoSelection = 1
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal)
         }
     }
     
     private var uploadButton: some View {
-        TextButton(text: "add", size: 330, color: firstImage == nil || secondImage == nil ? .gray : .blue) {
+        TextButton(text: "add", size: 330, color: (firstImage == nil || secondImage == nil) || download ? .gray : .blue) {
             
             withAnimation {
                 download = true
@@ -242,7 +265,9 @@ struct NewMemoryView: View {
                     download = false
                     
                     if ans {
-                        dismiss.toggle()
+                        withAnimation {
+                            dismiss()
+                        }
                         
                         DispatchQueue.main.async {
                             self.memoryViewModel.fetchGlobalMemories()
@@ -251,10 +276,12 @@ struct NewMemoryView: View {
                 }
             }
         }
+        .disabled(download)
     }
 }
 
-extension NewMemoryView {
+extension NewPostView {
+    
     private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
@@ -289,21 +316,22 @@ extension NewMemoryView {
     }
 }
 
-
+@MainActor
 struct CameraPreview: UIViewRepresentable {
-    @ObservedObject var camera: CameraViewModel
+    @EnvironmentObject private var camera: CameraViewModel
     
     public func makeUIView(context: Context) -> UIView {
         let frame = CGRect(x: 0, y: 0, width: Constants.width, height: Constants.height)
         let view = UIView(frame: frame)
         
-        camera.preview = AVCaptureVideoPreviewLayer(session: camera.session)
         camera.preview.frame = view.frame
         
         camera.preview.videoGravity = .resizeAspectFill
         view.layer.addSublayer(camera.preview)
         
-        camera.session.startRunning()
+        DispatchQueue.main.async {
+            camera.session.startRunning()
+        }
         
         return view
     }

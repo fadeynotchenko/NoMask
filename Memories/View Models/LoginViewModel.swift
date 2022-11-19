@@ -27,11 +27,9 @@ class LoginViewModel: ObservableObject {
                 return
             }
             
-            
             withAnimation {
                 UserDefaults.standard.set(true, forKey: "isLoggin")
             }
-            
         }
     }
 }
