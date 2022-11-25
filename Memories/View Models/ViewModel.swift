@@ -128,13 +128,14 @@ class ViewModel: ObservableObject {
         }
     }
     
-    func fetchUserData(userID: String, _ completion: @escaping (URL?, String) -> ()) {
+    func fetchUserData(userID: String, _ completion: @escaping (URL, String, Bool) -> ()) {
         Firestore.firestore().collection("User Data").document(userID).getDocument { snapshot, error in
             if let userData = snapshot?.data(), error == nil {
-                let userImage = URL(string: (userData["image"] as? String ?? ""))
+                let userImage = URL(string: (userData["image"] as! String))!
                 let userNickname = userData["nickname"] as! String
+                let userIsBanned = userData["deleted"] as? Bool ?? false
                 
-                completion(userImage, userNickname)
+                completion(userImage, userNickname, userIsBanned)
             }
         }
     }
@@ -144,7 +145,10 @@ class ViewModel: ObservableObject {
         
         Firestore.firestore().collection("User Data").document(id).addSnapshotListener { snapshot, error in
             if let data = snapshot?.data(), error == nil {
-                self.userNickname = data["nickname"] as? String ?? ""
+                
+                if let nickname = data["nickname"] as? String {
+                    self.userNickname = nickname
+                }
                 
                 self.userIsBannded = data["banned"] as? Bool ?? false
                 

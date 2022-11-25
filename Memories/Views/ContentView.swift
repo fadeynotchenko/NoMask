@@ -9,15 +9,15 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @AppStorage("isLoggin") private var isLoggin = false
-    @AppStorage("isProfile") private var isProfile = false
+    @AppStorage("LOGIN") private var LOGIN = false
+    @AppStorage("EDIT_PROFILE") private var EDIT_PROFILE = false
     
     @EnvironmentObject private var memoryViewModel: ViewModel
     
     var body: some View {
-        if isLoggin && isProfile == false {
+        if LOGIN && EDIT_PROFILE == false {
             EditProfileView(isEntry: true)
-        } else if isLoggin && isProfile {
+        } else if LOGIN && EDIT_PROFILE {
             GlobalMemoriesView()
         } else {
             LoginView()

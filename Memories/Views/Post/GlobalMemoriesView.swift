@@ -18,7 +18,6 @@ import BottomSheet
 struct GlobalMemoriesView: View {
     
     @EnvironmentObject private var memoryViewModel: ViewModel
-    @EnvironmentObject private var cameraViewModel: CameraViewModel
     
     //views
     @State private var showBannedView = false
@@ -68,14 +67,13 @@ struct GlobalMemoriesView: View {
             .fullScreenCover(isPresented: $memoryViewModel.userIsBannded) {
                 BannedView()
             }
-            .bottomSheet(isPresented: $showProfileView, detents: [.large()]) {
+            .fullScreenCover(isPresented: $showProfileView) {
                 ProfileView()
                     .environmentObject(memoryViewModel)
             }
-            .bottomSheet(isPresented: $showNewPostView, detents: [.large()]) {
+            .fullScreenCover(isPresented: $showNewPostView) {
                 NewPostView()
                     .environmentObject(memoryViewModel)
-                    .environmentObject(cameraViewModel)
             }
             .toast(isPresenting: $reportSent) {
                 AlertToast(displayMode: .banner(.pop), type: .complete(.green), title: NSLocalizedString("reportSent", comment: ""))
@@ -91,13 +89,7 @@ struct GlobalMemoriesView: View {
             }
             .confirmationDialog("", isPresented: $showDeleteDialog) {
                 Button(role: .destructive) {
-                    if let currentMemory = currentMemory {
-                        Firestore.firestore().collection("Global Memories").document(currentMemory.memoryID).delete { _ in }
-                        
-                        withAnimation {
-                            memoryViewModel.globalPosts = memoryViewModel.globalPosts.filter { $0.memoryID != currentMemory.memoryID }
-                        }
-                    }
+                    deleteMyPost()
                 } label: {
                     Text("delete")
                 }
@@ -113,6 +105,7 @@ struct GlobalMemoriesView: View {
             } message: {
                 Text("ban_dialog")
             }
+            .statusBarHidden(true)
     }
     
     @ViewBuilder
@@ -120,7 +113,7 @@ struct GlobalMemoriesView: View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 ForEach(globalMemories) { memory in
-                    MemoryCardView(showReportDialog: $showReportDialog, showDeleteDialog: $showDeleteDialog, showBanUserDialog: $showBanUserDialog, currentMemory: $currentMemory, memory: memory, isPersonal: false)
+                    MemoryCardView(showReportDialog: $showReportDialog, showDeleteDialog: $showDeleteDialog, showBanUserDialog: $showBanUserDialog, currentMemory: $currentMemory, memory: memory)
                 }
             }
             .offset(y: 70)
@@ -138,7 +131,9 @@ struct GlobalMemoriesView: View {
     private var header: some View {
         HStack {
             ImageButton(systemName: "plus", color: .white) {
-                showNewPostView.toggle()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    showNewPostView.toggle()
+                }
             }
             
             Spacer()
@@ -156,9 +151,10 @@ struct GlobalMemoriesView: View {
             Spacer()
             
             ImageButton(systemName: "person.fill", color: .white) {
-                showProfileView.toggle()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    showProfileView.toggle()
+                }
             }
-            
         }
         .frame(maxWidth: Constants.width - 20, alignment: .center)
         
@@ -198,6 +194,16 @@ extension GlobalMemoriesView {
         memoryViewModel.ignorePosts.append(currentMemory.userID)
         
         Firestore.firestore().collection("User Data").document(id).updateData(["ignore": memoryViewModel.ignorePosts])
+    }
+    
+    private func deleteMyPost() {
+        if let currentMemory = currentMemory {
+            Firestore.firestore().collection("Global Memories").document(currentMemory.memoryID).delete { _ in }
+            
+            withAnimation {
+                memoryViewModel.globalPosts = memoryViewModel.globalPosts.filter { $0.memoryID != currentMemory.memoryID }
+            }
+        }
     }
 }
 

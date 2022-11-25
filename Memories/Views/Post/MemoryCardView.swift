@@ -18,7 +18,6 @@ struct MemoryCardView: View {
     @Binding var showBanUserDialog: Bool
     @Binding var currentMemory: Post?
     @State var memory: Post
-    var isPersonal: Bool
     
     @State private var selection = 0
     
@@ -32,11 +31,7 @@ struct MemoryCardView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            if isPersonal {
-                personalTopView
-            } else {
-                topView
-            }
+            postHeader
             
             TabView(selection: $selection) {
                 ForEach(0..<memory.images.count, id: \.self) { i in
@@ -45,7 +40,7 @@ struct MemoryCardView: View {
                             ImageItem(url: url, size: CGSize(width: Constants.width, height: Constants.height), loadDisk: memory.userID == userID)
                                 .onTapGesture {
                                     withAnimation {
-                                        selection = selection == 0 ? 1 : 0
+                                        selection = (selection == 0) ? 1 : 0
                                     }
                                 }
                         }
@@ -56,10 +51,11 @@ struct MemoryCardView: View {
             .tabViewStyle(.page(indexDisplayMode: memory.images.count == 1 ? .never : .always))
             .frame(width: Constants.width, height: Constants.height)
             .onAppear {
-                memoryViewModel.fetchUserData(userID: memory.userID) { url, nickname in
+                memoryViewModel.fetchUserData(userID: memory.userID) { url, nickname, banned in
                     withAnimation {
                         memory.userImage = url
                         memory.userNickname = nickname
+                        memory.userIsBanned = banned
                     }
                 }
             }
@@ -136,7 +132,7 @@ struct MemoryCardView: View {
     }
     
     @ViewBuilder
-    private var topView: some View {
+    private var postHeader: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 if let url = memory.userImage, !url.absoluteString.isEmpty {
@@ -158,7 +154,8 @@ struct MemoryCardView: View {
                                     .foregroundStyle(.linearGradient(colors: [.orange, .purple], startPoint: .topTrailing, endPoint: .bottomLeading))
                             }
                         }
-                            
+                    } else if memory.userIsBanned == true {
+                        Title(text: "banned", font: .system(size: 15))
                     }
                     
                     Text(memory.date.timeAgoDisplay())
@@ -173,53 +170,7 @@ struct MemoryCardView: View {
                 menuButton
             }
             
-            if let desc = memory.descText {
-                Text(desc)
-                    .multilineTextAlignment(.leading)
-                    .foregroundColor(.gray)
-                    .font(.system(size: 14))
-                    .padding(.horizontal)
-            }
-        }
-        .padding(.vertical)
-        .frame(maxWidth: Constants.width)
-        .background(.ultraThickMaterial)
-        .cornerRadius(15, corners: [.topLeft, .topRight])
-    }
-    
-    @ViewBuilder
-    private var personalTopView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                if let url = memoryViewModel.userAvatar {
-                    Avatar(avatarType: .url(url), size: CGSize(width: 40, height: 40), downloadImage: true)
-                        .padding(.leading)
-                }
-                
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack(spacing: 5) {
-                        Title(text: "\(memoryViewModel.userNickname)", font: .system(size: 15))
-                        
-                        if memoryViewModel.admins.contains(memory.userID) {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.linearGradient(colors: [.orange, .purple], startPoint: .topTrailing, endPoint: .bottomLeading))
-                        }
-                    }
-                    
-                    Text(memory.date.timeAgoDisplay())
-                        .bold()
-                        .font(.system(size: 13))
-                        .foregroundColor(.gray)
-                        .padding(.trailing)
-                }
-                
-                Spacer()
-                
-                menuButton
-            }
-            
-            if let desc = memory.descText {
+            if let desc = memory.descText, !desc.isEmpty {
                 Text(desc)
                     .multilineTextAlignment(.leading)
                     .foregroundColor(.gray)

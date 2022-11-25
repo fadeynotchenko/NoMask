@@ -46,7 +46,7 @@ struct TextButton: View {
 }
 
 struct GeoButton: View {
-    var title: String
+    var title: LocalizedStringKey
     var systemImage: String
     var id: Int
     @Binding var geoSelection: Int
@@ -93,13 +93,13 @@ struct ImageButton: View {
             Image(systemName: systemName)
                 .resizable()
                 .scaledToFit()
-                .padding(10)
-                .frame(width: size != nil ? size! : 35, height: size != nil ? size! : 35)
-                .foregroundColor(color)
-                .background(.ultraThickMaterial)
-                .clipShape(Circle())
-                .shadow(radius: 3)
         }
+        .padding(10)
+        .frame(width: size != nil ? size! : 35, height: size != nil ? size! : 35)
+        .foregroundColor(color)
+        .background(.ultraThickMaterial)
+        .clipShape(Circle())
+        .shadow(radius: 3)
     }
 }
 
@@ -200,7 +200,6 @@ struct Chevron: View {
 }
 
 struct RoundedCorner: Shape {
-
     var radius: CGFloat = .infinity
     var corners: UIRectCorner = .allCorners
 
@@ -211,7 +210,6 @@ struct RoundedCorner: Shape {
 }
 
 struct Permission: View {
-    
     let text: LocalizedStringKey
     
     var body: some View {
@@ -221,7 +219,7 @@ struct Permission: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
-            Button("Перейти в настройки") {
+            Button("open_settings") {
                 UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
             }
         }
@@ -270,4 +268,3 @@ struct NicknameTF: View {
         .padding()
     }
 }
-

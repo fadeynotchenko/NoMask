@@ -14,6 +14,7 @@ struct Post: Hashable, Identifiable {
     var userID: String
     var userNickname: String?
     var userImage: URL?
+    var userIsBanned: Bool?
     var descText: String?
     var date: Date
     var images: [URL]

@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseAuth
 import AlertToast
 import Kingfisher
+import FirebaseFirestore
 
 struct ProfileView: View {
     
@@ -35,43 +36,13 @@ struct ProfileView: View {
                             } label: {
                                 editSection
                             }
-                            
-                            //                            NavigationLink {
-                            //                                SettingsView()
-                            //                            } label: {
-                            //                                settingSection
-                            //                            }
-                            
-                                                    PersonalMemoriesView()
-                            
-                            //                            logoutButton
-                            //                                .padding(.top, reader.size.width / 3.5)
-                            //
-                            //                            deleteButton
                         }
                     }
                 }
                 .navigationBarHidden(true)
-                .onAppear {
-                    viewModel.fetchSelfData()
-                    
-                    viewModel.fetchAdmins()
-                }
-                .navigationBarHidden(true)
                 .confirmationDialog("", isPresented: $showLogoutDialog) {
                     Button(role: .destructive) {
-                        withAnimation {
-                            do {
-                                try Auth.auth().signOut()
-                                
-                                UserDefaults.standard.set(false, forKey: "isLoggin")
-                                UserDefaults.standard.set(false, forKey: "isProfile")
-                                
-                                dismiss()
-                            } catch {
-                                print(error.localizedDescription)
-                            }
-                        }
+                        signOut()
                     } label: {
                         Text("logout_yes")
                     }
@@ -79,24 +50,7 @@ struct ProfileView: View {
                     Text("logout_dialog")
                 }
                 .confirmationDialog("", isPresented: $showDeleteAccDialog) {
-                    Button(role: .destructive) {
-                        withAnimation {
-                            let user = Auth.auth().currentUser
-                            
-                            user?.delete { error in
-                                if let error = error {
-                                    print(error.localizedDescription)
-                                } else {
-                                    UserDefaults.standard.set(false, forKey: "isLoggin")
-                                    UserDefaults.standard.set(false, forKey: "isProfile")
-                                    
-                                    dismiss()
-                                }
-                            }
-                        }
-                    } label: {
-                        Text("delete_yes")
-                    }
+                    deleteButton
                 } message: {
                     Text("delete_dialog")
                 }
@@ -125,6 +79,11 @@ struct ProfileView: View {
                         }
                     }
                     .padding()
+                }
+                .onAppear {
+                    viewModel.fetchSelfData()
+                    
+                    viewModel.fetchAdmins()
                 }
             }
         }
@@ -182,44 +141,30 @@ struct ProfileView: View {
         .shadow(radius: 3)
     }
     
-    private var personalSection: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "rectangle.stack.fill")
-                .font(.title2)
-                .foregroundColor(.white)
+    private var deleteButton: some View {
+        Button(role: .destructive) {
+            guard let id = Auth.auth().currentUser?.uid else { return }
             
-            Title(text: "my", font: .headline)
-            
-            Spacer()
-            
-            Chevron()
-                .padding(.horizontal)
+            Firestore.firestore().collection("User Data").document(id).setData(["deleted": true])
+        } label: {
+            Text("delete_yes")
         }
-        .padding()
-        .frame(maxWidth: Constants.width)
-        .background(.ultraThickMaterial)
-        .cornerRadius(15)
-        .shadow(radius: 3)
-    }
-    
-    private var settingSection: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "gearshape.fill")
-                .font(.title2)
-                .foregroundColor(.white)
-            
-            Title(text: "settings", font: .headline)
-            
-            Spacer()
-            
-            Chevron()
-                .padding(.horizontal)
-        }
-        .padding()
-        .frame(maxWidth: Constants.width)
-        .background(.ultraThickMaterial)
-        .cornerRadius(15)
-        .shadow(radius: 3)
     }
 }
 
+extension ProfileView {
+    func signOut() {
+        withAnimation {
+            do {
+                try Auth.auth().signOut()
+                
+                UserDefaults.standard.set(false, forKey: "LOGIN")
+                UserDefaults.standard.set(false, forKey: "EDIT_PROFILE")
+                
+                dismiss()
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+    }
+}

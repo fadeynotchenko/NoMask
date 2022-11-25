@@ -29,14 +29,6 @@ extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape( RoundedCorner(radius: radius, corners: corners) )
     }
-    
-    func backgroundShadow() -> some View {
-        if #available(iOS 16.0, *) {
-            return self.background(Color("Background").shadow(.inner(radius: 30)))
-        } else {
-            return self.background(Color("Background"))
-        }
-    }
 }
 
 extension Date {
@@ -53,22 +45,4 @@ extension UINavigationController {
     navigationBar.topItem?.backButtonDisplayMode = .minimal
   }
 
-}
-
-extension String {
-    func before(first delimiter: Character) -> String {
-        if let index = firstIndex(of: delimiter) {
-            let before = prefix(upTo: index)
-            return String(before)
-        }
-        return ""
-    }
-    
-    func after(first delimiter: Character) -> String {
-        if let index = firstIndex(of: delimiter) {
-            let after = suffix(from: index).dropFirst()
-            return String(after)
-        }
-        return ""
-    }
 }

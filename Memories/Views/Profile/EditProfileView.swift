@@ -58,11 +58,6 @@ struct EditProfileView: View {
                 saveButton
             }
             .ignoresSafeArea(.keyboard, edges: .all)
-            .onAppear {
-                nickname = memoryViewModel.userNickname
-                
-                checkStatus()
-            }
         }
         .navigationTitle(Text("editprofile"))
         .navigationBarTitleDisplayMode(.inline)
@@ -75,8 +70,14 @@ struct EditProfileView: View {
                 Download()
             }
         }
-        .sheet(isPresented: $showPickerView) {
+        .fullScreenCover(isPresented: $showPickerView) {
             ImagePicker(image: $photo, dismiss: $showPickerView)
+                .edgesIgnoringSafeArea(.all)
+        }
+        .onAppear {
+            nickname = memoryViewModel.userNickname
+            
+            checkStatus()
         }
     }
     
@@ -107,39 +108,31 @@ struct EditProfileView: View {
                         
                         if let url = url {
                             
-                            if let oldImage = memoryViewModel.userAvatar {
-                                Storage.storage().reference(forURL: oldImage.absoluteString).delete { _ in }
+                            if memoryViewModel.userNickname.isEmpty && memoryViewModel.userAvatar == nil {
+                                Firestore.firestore().collection("User Data").document(id).setData(["nickname": nickname, "image": url])
+                            } else {
+                                Firestore.firestore().collection("User Data").document(id).updateData(["nickname": nickname, "image": url])
                             }
-                            
-//                            if nickname != memoryViewModel.userNickname {
-//                                Firestore.firestore().document(memoryViewModel.userNickname).delete { _ in }
-//                            }
-                            
-                            Firestore.firestore().collection("User Data").document(id).setData(["nickname": nickname, "image": url])
-                            
-                            memoryViewModel.fetchGlobalMemories()
                             
                             if isEntry {
                                 withAnimation {
-                                    UserDefaults.standard.set(true, forKey: "isProfile")
+                                    UserDefaults.standard.set(true, forKey: "EDIT_PROFILE")
                                 }
                             } else {
                                 dismiss()
+                                
+                                memoryViewModel.fetchGlobalMemories()
                             }
                         }
                     }
                 } else {
-//                    if nickname != memoryViewModel.userNickname {
-//                        Firestore.firestore().document(memoryViewModel.userNickname).delete { _ in }
-//                    }
-                    
-                    Firestore.firestore().collection("User Data").document(id).setData(["nickname": nickname])
+                    Firestore.firestore().collection("User Data").document(id).updateData(["nickname": nickname])
                     
                     memoryViewModel.fetchGlobalMemories()
                     
                     if isEntry {
                         withAnimation {
-                            UserDefaults.standard.set(true, forKey: "isProfile")
+                            UserDefaults.standard.set(true, forKey: "EDIT_PROFILE")
                         }
                     } else {
                         dismiss()

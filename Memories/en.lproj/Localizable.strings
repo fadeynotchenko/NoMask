@@ -25,9 +25,9 @@
 "preview" = "Preview";
 "nicknametext" = "Create a nickname to continue";
 "camerapermission" = "Gallery access is required to create a new post";
-"photopermission" = "A photo permission is required to upload a new avatar";
+"photopermission" = "In order to continue filling out the profile, access to the gallery is required";
 "desc" = "Description";
-"optional" = "(Optional)";
+"optional" = "Description (optional)";
 "fetchnext" = "Load more";
 "emptylist" = "The list is empty";
 "hide" = "Hide post";
@@ -47,3 +47,7 @@
 "ban_dialog" = "Are you sure you want to ban this user? You won't see this user";
 "ban_yes" = "Yes, ban";
 "info" = "Additional information";
+"addgeo" = "Add geolocation";
+"nogeo" = "No geolocation";
+"open_settings" = "Go to settings";
+"banned" = "User removed";

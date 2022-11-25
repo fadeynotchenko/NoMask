@@ -27,8 +27,12 @@ class LoginViewModel: ObservableObject {
                 return
             }
             
+            guard let id = Auth.auth().currentUser?.uid else { return}
+            
+            Firestore.firestore().collection("User Data").document(id).setData(["deleted": false])
+            
             withAnimation {
-                UserDefaults.standard.set(true, forKey: "isLoggin")
+                UserDefaults.standard.set(true, forKey: "LOGIN")
             }
         }
     }

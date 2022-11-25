@@ -93,6 +93,7 @@ class CameraViewModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate
         guard !devices.isEmpty else { fatalError("Missing capture devices.")}
         
         return devices.first(where: { device in device.position == position })!
+        //Fados123
     }
     
     // take and retake functions...

@@ -14,13 +14,16 @@ import FirebaseFirestore
 struct NewPostView: View {
     
     @EnvironmentObject private var memoryViewModel: ViewModel
-    @EnvironmentObject private var cameraViewModel: CameraViewModel
+    
+    @StateObject private var cameraViewModel = CameraViewModel()
+    @ObservedObject private var locationViewModel = LocationViewModel()
     
     @State private var images = [UIImage]()
     
     @State private var disabled = false
     @State private var download = false
     
+    @State private var geoSelection = 0
     @State private var selection = 0
     
     @State private var firstImage: UIImage?
@@ -28,9 +31,16 @@ struct NewPostView: View {
     
     @State private var text = ""
     
-    @State private var geoSelection = 0
-    
     @Environment(\.dismiss) private var dismiss
+    
+    private var location: String? {
+        if let placemark = locationViewModel.placemark, let country = placemark.country, let city = placemark.locality {
+            
+            return "\(country), \(city)"
+        }
+        
+        return nil
+    }
     
     var body: some View {
         NavigationView {
@@ -38,8 +48,6 @@ struct NewPostView: View {
                 Color("Background").edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 10) {
-                    header
-                    
                     if selection == 2 {
                         info
                     } else {
@@ -59,8 +67,38 @@ struct NewPostView: View {
                     }
                 }
                 .ignoresSafeArea(.keyboard, edges: .all)
+                .padding(.top)
             }
-            .navigationTitle(Text("new"))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundColor(.white)
+                    }
+                }
+                
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 5) {
+                        Text("new")
+                            .bold()
+                            .font(.headline)
+                        
+                        if selection != 2 {
+                            Text(selection == 0 ? "camera1" : "camera2")
+                                .bold()
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        } else {
+                            Text("info")
+                                .bold()
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+            }
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 cameraViewModel.checkPermission()
@@ -99,7 +137,7 @@ struct NewPostView: View {
             ProgressView()
                 .shadow(radius: 3)
             
-            CameraPreview()
+            CameraPreview(camera: cameraViewModel)
                 .frame(width: Constants.width, height: Constants.height)
                 .cornerRadius(15)
                 .shadow(radius: 3)
@@ -115,15 +153,6 @@ struct NewPostView: View {
         .frame(width: Constants.width, height: Constants.height)
         .cornerRadius(15)
         .shadow(radius: 3)
-    }
-    
-    @ViewBuilder
-    private var header: some View {
-        if selection != 2 {
-            Title(text: selection == 0 ? "camera1" : "camera2", font: .subheadline)
-        } else {
-            Title(text: "info", font: .subheadline)
-        }
     }
     
     private var takePhotoButton: some View {
@@ -236,22 +265,24 @@ struct NewPostView: View {
             .padding(.top)
             
             
-            VStack(alignment: .leading, spacing: 15) {
-                Title(text: "Геолокация", font: .headline)
-                
-                HStack {
-                    //location
-                    GeoButton(title: "Без геолокации", systemImage: "location.slash", id: 0, geoSelection: $geoSelection) {
-                        geoSelection = 0
-                    }
-
-                    GeoButton(title: "Добавить геолокацию", systemImage: "location", id: 1, geoSelection: $geoSelection) {
-                        geoSelection = 1
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal)
+//            VStack(alignment: .leading, spacing: 15) {
+//                Title(text: "Геолокация", font: .headline)
+//
+//                HStack {
+//                    //location
+//                    GeoButton(title: "nogeo", systemImage: "location.slash", id: 0, geoSelection: $geoSelection) {
+//                        geoSelection = 0
+//                    }
+//
+//                    GeoButton(title: location == nil ? "addgeo" : "\(location!)", systemImage: "location", id: 1, geoSelection: $geoSelection) {
+//                        geoSelection = 1
+//
+//                        locationViewModel.requestPermission()
+//                    }
+//                }
+//            }
+//            .frame(maxWidth: .infinity, alignment: .leading)
+//            .padding(.horizontal)
         }
     }
     
@@ -281,7 +312,6 @@ struct NewPostView: View {
 }
 
 extension NewPostView {
-    
     private func uploadToFirebase(_ completion: @escaping (Bool) -> Void) {
         guard let id = Auth.auth().currentUser?.uid else { return }
         
@@ -298,8 +328,9 @@ extension NewPostView {
                     uploadedCount += 1
                     
                     if uploadedCount == images.count {
-                        if text.isEmpty {
-                            db.setData(["date": Date(), "images": imageURLs, "userID": id])
+                        
+                        if let location = locationViewModel.location?.coordinate {
+                            db.setData(["date": Date(), "images": imageURLs, "userID": id, "desc": text, "location": GeoPoint(latitude: location.latitude, longitude: location.longitude)])
                         } else {
                             db.setData(["date": Date(), "images": imageURLs, "userID": id, "desc": text])
                         }
@@ -318,12 +349,13 @@ extension NewPostView {
 
 @MainActor
 struct CameraPreview: UIViewRepresentable {
-    @EnvironmentObject private var camera: CameraViewModel
+    @ObservedObject var camera: CameraViewModel
     
     public func makeUIView(context: Context) -> UIView {
         let frame = CGRect(x: 0, y: 0, width: Constants.width, height: Constants.height)
         let view = UIView(frame: frame)
         
+        camera.preview = AVCaptureVideoPreviewLayer(session: camera.session)
         camera.preview.frame = view.frame
         
         camera.preview.videoGravity = .resizeAspectFill
