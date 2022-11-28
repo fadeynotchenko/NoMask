@@ -17,7 +17,6 @@ class ViewModel: ObservableObject {
     
     //global data
     @Published var globalPosts = [Post]()
-    @Published var personalMemories = [Post]()
     
     //admin
     @Published var admins = [String]()
@@ -29,7 +28,6 @@ class ViewModel: ObservableObject {
     @Published var ignorePosts = [String]()
     
     //load data status
-    @Published var loadMyMemoriesStatus: LoadDataStatus = .start
     @Published var loadGlobalMemoriesStatus: LoadDataStatus = .start
     
     @Published var imageDownloaded = false
@@ -104,34 +102,10 @@ class ViewModel: ObservableObject {
         }
     }
     
-    func fetchPersonalMemories() {
-        guard let id = Auth.auth().currentUser?.uid else { return }
-        
-        self.loadMyMemoriesStatus = .start
-        
-        Firestore.firestore().collection("Global Memories").whereField("userID", isEqualTo: id).order(by: "date", descending: true).getDocuments { snapshots, error in
-            if let documents = snapshots?.documents, error == nil {
-                print(documents)
-                self.personalMemories = documents.map { snapshot -> Post in
-                    let data = snapshot.data()
-                    
-                    let date = (data["date"] as! Timestamp).dateValue()
-                    let images = (data["images"] as! [String]).map { URL(string: $0)! }
-                    let userID = data["userID"] as! String
-                    let descText = data["desc"] as? String
-                    
-                    return Post(memoryID: snapshot.documentID, userID: userID, descText: descText, date: date, images: images)
-                }
-            }
-            
-            self.loadMyMemoriesStatus = .finish
-        }
-    }
-    
-    func fetchUserData(userID: String, _ completion: @escaping (URL, String, Bool) -> ()) {
+    func fetchUserData(userID: String, _ completion: @escaping (URL?, String, Bool) -> ()) {
         Firestore.firestore().collection("User Data").document(userID).getDocument { snapshot, error in
             if let userData = snapshot?.data(), error == nil {
-                let userImage = URL(string: (userData["image"] as! String))!
+                let userImage = URL(string: (userData["image"] as? String ?? ""))
                 let userNickname = userData["nickname"] as! String
                 let userIsBanned = userData["deleted"] as? Bool ?? false
                 

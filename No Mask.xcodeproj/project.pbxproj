@@ -18,7 +18,7 @@
 		43332E3E28EB4FE6006E017B /* GlobalMemoriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43332E3D28EB4FE6006E017B /* GlobalMemoriesView.swift */; };
 		43332E4328EB5D92006E017B /* AlertToast in Frameworks */ = {isa = PBXBuildFile; productRef = 43332E4228EB5D92006E017B /* AlertToast */; };
 		4335698A29227CA2001090F4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4335698929227CA2001090F4 /* SettingsView.swift */; };
-		4335C56C28F22CE7005BB3A3 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4335C56B28F22CE7005BB3A3 /* GoogleService-Info.plist */; };
+		43443A32293212860032B995 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 43443A31293212860032B995 /* GoogleService-Info.plist */; };
 		43475E99290975FE000366C0 /* MemoryCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43475E98290975FE000366C0 /* MemoryCardView.swift */; };
 		434827A6290C1AD300F6700A /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434827A5290C1AD300F6700A /* Secrets.swift */; };
 		434DC0212906EDC0000724B7 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 434DC0202906EDC0000724B7 /* RevenueCat */; };
@@ -68,7 +68,7 @@
 		43332E3C28EB477B006E017B /* Memories.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Memories.entitlements; sourceTree = "<group>"; };
 		43332E3D28EB4FE6006E017B /* GlobalMemoriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalMemoriesView.swift; sourceTree = "<group>"; };
 		4335698929227CA2001090F4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		4335C56B28F22CE7005BB3A3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		43443A31293212860032B995 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "../../../Downloads/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		43475E98290975FE000366C0 /* MemoryCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryCardView.swift; sourceTree = "<group>"; };
 		434771D328F5E5FB00BE0214 /* MemoryWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MemoryWidgetExtension.entitlements; sourceTree = "<group>"; };
 		434827A5290C1AD300F6700A /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
@@ -146,7 +146,7 @@
 				43475E9D290ADD8D000366C0 /* Constans */,
 				43932F6A2901A14F008D66B7 /* Localizable.strings */,
 				43332E1D28EB3D2C006E017B /* Assets.xcassets */,
-				4335C56B28F22CE7005BB3A3 /* GoogleService-Info.plist */,
+				43443A31293212860032B995 /* GoogleService-Info.plist */,
 				432C678C28F9E7D200A7A9F2 /* Launch Screen.storyboard */,
 				43332E1F28EB3D2C006E017B /* Preview Content */,
 			);
@@ -299,9 +299,9 @@
 			files = (
 				43932F672901A14F008D66B7 /* Localizable.strings in Resources */,
 				43332E2128EB3D2C006E017B /* Preview Assets.xcassets in Resources */,
-				4335C56C28F22CE7005BB3A3 /* GoogleService-Info.plist in Resources */,
 				432C678D28F9E7D200A7A9F2 /* Launch Screen.storyboard in Resources */,
 				43332E1E28EB3D2C006E017B /* Assets.xcassets in Resources */,
+				43443A32293212860032B995 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,7 +472,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Memories/Memories.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"Memories/Preview Content\"";
 				DEVELOPMENT_TEAM = CQ3SGH4DSY;
 				ENABLE_PREVIEWS = YES;
@@ -513,7 +513,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Memories/Memories.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"Memories/Preview Content\"";
 				DEVELOPMENT_TEAM = CQ3SGH4DSY;
 				ENABLE_PREVIEWS = YES;

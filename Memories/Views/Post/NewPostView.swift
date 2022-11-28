@@ -10,6 +10,7 @@ import AVKit
 import Firebase
 import FirebaseStorage
 import FirebaseFirestore
+import CoreLocation
 
 struct NewPostView: View {
     
@@ -25,6 +26,7 @@ struct NewPostView: View {
     
     @State private var geoSelection = 0
     @State private var selection = 0
+    @State private var photoSelection = 0
     
     @State private var firstImage: UIImage?
     @State private var secondImage: UIImage?
@@ -33,13 +35,18 @@ struct NewPostView: View {
     
     @Environment(\.dismiss) private var dismiss
     
-    private var location: String? {
-        if let placemark = locationViewModel.placemark, let country = placemark.country, let city = placemark.locality {
+    private var locationString: String? {
+        var result: String?
+        if let placemark = locationViewModel.placemark, let country = placemark.country {
             
-            return "\(country), \(city)"
+            result?.append(country)
+            
+            if let city = placemark.locality {
+                result?.append(", \(city)")
+            }
         }
         
-        return nil
+        return result
     }
     
     var body: some View {
@@ -49,7 +56,7 @@ struct NewPostView: View {
                 
                 VStack(spacing: 10) {
                     if selection == 2 {
-                        info
+                        PostPreview
                     } else {
                         camera
                         
@@ -80,23 +87,7 @@ struct NewPostView: View {
                 }
                 
                 ToolbarItem(placement: .principal) {
-                    VStack(spacing: 5) {
-                        Text("new")
-                            .bold()
-                            .font(.headline)
-                        
-                        if selection != 2 {
-                            Text(selection == 0 ? "camera1" : "camera2")
-                                .bold()
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        } else {
-                            Text("info")
-                                .bold()
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                    }
+                    header
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -128,6 +119,26 @@ struct NewPostView: View {
                 if download {
                     Download()
                 }
+            }
+        }
+    }
+    
+    private var header: some View {
+        VStack(spacing: 5) {
+            Text("new")
+                .bold()
+                .font(.headline)
+            
+            if selection != 2 {
+                Text(selection == 0 ? "camera1" : "camera2")
+                    .bold()
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            } else {
+                Text("info")
+                    .bold()
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
             }
         }
     }
@@ -234,56 +245,63 @@ struct NewPostView: View {
         .disabled(secondImage == nil)
     }
     
-    private var info: some View {
-        VStack(spacing: 15) {
-            //descption
+    @ViewBuilder
+    private var PostPreview: some View {
+        VStack {
             VStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 15) {
-                    Title(text: "desc", font: .headline)
-                    
-                    VStack {
-                        TextField("optional", text: $text)
-                            .onChange(of: text) { _ in
-                                text = String(text.prefix(Constants.DESCRIPTION_LIMIT))
-                            }
-                        
-                        Rectangle()
-                            .frame(height: 1)
-                            .foregroundColor(.gray)
+                TextField("optional", text: $text)
+                    .padding()
+                    .onChange(of: text) { _ in
+                        text = String(text.prefix(Constants.DESCRIPTION_LIMIT))
                     }
-                    .shadow(radius: 3)
-                }
-                .padding(.horizontal)
                 
-                Text("\(text.count)/\(Constants.DESCRIPTION_LIMIT)")
-                    .font(.system(size: 12))
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.horizontal)
-                    .padding(.top, 5)
+                TabView(selection: $photoSelection) {
+                    if let firstImage = firstImage {
+                        photoTabItem(image: firstImage)
+                            .tag(0)
+                    }
+                    
+                    if let secondImage = secondImage {
+                        photoTabItem(image: secondImage)
+                            .tag(1)
+                    }
+                }
+                .frame(maxHeight: Constants.height)
+                .tabViewStyle(.page(indexDisplayMode: .always))
             }
-            .padding(.top)
-            
-            
-//            VStack(alignment: .leading, spacing: 15) {
-//                Title(text: "Геолокация", font: .headline)
-//
-//                HStack {
-//                    //location
-//                    GeoButton(title: "nogeo", systemImage: "location.slash", id: 0, geoSelection: $geoSelection) {
-//                        geoSelection = 0
-//                    }
-//
-//                    GeoButton(title: location == nil ? "addgeo" : "\(location!)", systemImage: "location", id: 1, geoSelection: $geoSelection) {
-//                        geoSelection = 1
-//
-//                        locationViewModel.requestPermission()
-//                    }
-//                }
-//            }
-//            .frame(maxWidth: .infinity, alignment: .leading)
-//            .padding(.horizontal)
+            .frame(width: Constants.width)
+            .background(.ultraThickMaterial)
+            .cornerRadius(15)
         }
+        .shadow(radius: 3)
+        
+        HStack {
+            //location
+            GeoButton(title: "nogeo", systemImage: "location.slash", id: 0, geoSelection: $geoSelection) {
+                geoSelection = 0
+            }
+
+            GeoButton(title: locationString == nil ? "addgeo" : "\(locationString!)", systemImage: "location", id: 1, geoSelection: $geoSelection) {
+                geoSelection = 1
+
+                locationViewModel.requestPermission()
+            }
+        }
+        .padding()
+        .shadow(radius: 3)
+    }
+    
+    @ViewBuilder
+    private func photoTabItem(image: UIImage) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(height: Constants.height)
+            .onTapGesture {
+                withAnimation {
+                    photoSelection = (photoSelection == 0) ? 1 : 0
+                }
+            }
     }
     
     private var uploadButton: some View {

@@ -146,6 +146,11 @@ struct ProfileView: View {
             guard let id = Auth.auth().currentUser?.uid else { return }
             
             Firestore.firestore().collection("User Data").document(id).setData(["deleted": true])
+            
+            viewModel.userAvatar = nil
+            viewModel.userNickname = ""
+            
+            signOut()
         } label: {
             Text("delete_yes")
         }

@@ -270,8 +270,8 @@
             filePath = "Memories/View Models/ViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "143"
-            endingLineNumber = "143"
+            startingLineNumber = "117"
+            endingLineNumber = "117"
             landmarkName = "fetchSelfData()"
             landmarkType = "7">
          </BreakpointContent>
